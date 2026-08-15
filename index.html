@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PdfPreview 插件演示</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          "PingFang SC",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+      #app {
+        position: fixed;
+        inset: 48px 0 0 0;
+      }
+      .demo-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: #ffffff;
+        color: #202124;
+        border-bottom: 1px solid #dadce0;
+        box-shadow: 0 1px 2px rgb(60 64 67 / 15%);
+        z-index: 1000;
+      }
+      .demo-bar h1 {
+        font-size: 14px;
+        font-weight: 500;
+        color: #5f6368;
+        margin: 0 8px 0 0;
+        white-space: nowrap;
+      }
+      .demo-bar select {
+        height: 32px;
+        padding: 0 8px;
+        border-radius: 8px;
+        border: 1px solid #dadce0;
+        background: #ffffff;
+        color: #202124;
+        outline: none;
+        font: inherit;
+      }
+      .demo-bar select:hover {
+        border-color: #bdc1c6;
+      }
+      .demo-bar select:focus {
+        border-color: #1a73e8;
+      }
+      .demo-bar button {
+        height: 32px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 999px;
+        background: #1a73e8;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.15s ease;
+      }
+      .demo-bar button:hover {
+        background: #1765cc;
+      }
+      .demo-bar .hint {
+        color: #5f6368;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #fileInput {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-bar">
+      <h1>PdfPreview</h1>
+      <select id="urls">
+        <option value="/sample.pdf" selected>本地示例 sample.pdf（6 页）</option>
+        <option value="/large.pdf">本地大文件 large.pdf（500 页）</option>
+        <option value="/pdfh5/git.pdf">远程：git.pdf (gjtool.cn)</option>
+        <option value="/api/测试.pdf">远程：测试.pdf (neocities)</option>
+      </select>
+      <button id="openBtn">打开本地 PDF</button>
+      <input id="fileInput" type="file" accept="application/pdf,.pdf" />
+      <span class="hint" id="hint"></span>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

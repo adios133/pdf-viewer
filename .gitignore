@@ -1,0 +1,33 @@
+# ===== 依赖与构建产物 =====
+node_modules/
+dist/
+
+# ===== 缓存与日志 =====
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+.eslintcache
+*.tsbuildinfo
+.vite/
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+
+# ===== 生成物（可通过脚本重新生成）=====
+# 500 页大文件测试样本：pnpm gen:large
+public/large.pdf
+# 从 node_modules/pdfjs-dist 复制的 cMap / 标准字体（见 README「静态资源说明」）：
+#   cp -R node_modules/pdfjs-dist/cmaps public/pdfjs/cmaps
+#   cp -R node_modules/pdfjs-dist/standard_fonts public/pdfjs/standard_fonts
+public/pdfjs/
+
+# ===== 编辑器（保留 .vscode/settings.json 共享配置）=====
+.vscode/*.local.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

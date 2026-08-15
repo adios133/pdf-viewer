@@ -1,0 +1,776 @@
+/*
+ * pdf 预览插件样式 —— Material 浅色风格（页面本身样式由 pdf_viewer.css 提供）。
+ * 所有类名前缀 ppv- 以避免与宿主页面冲突。
+ */
+
+.ppv-root {
+  --ppv-primary: #1a73e8;
+  --ppv-primary-hover: #1765cc;
+  --ppv-primary-active: #1557b0;
+  --ppv-on-primary: #ffffff;
+  --ppv-selected-bg: #e8f0fe;
+  --ppv-surface: #ffffff;
+  --ppv-bg-app: #e8eaed;
+  --ppv-bg-input: #f1f3f4;
+  --ppv-hover: #f1f3f4;
+  --ppv-text-primary: #202124;
+  --ppv-text-secondary: #5f6368;
+  --ppv-text-tertiary: #9aa0a6;
+  --ppv-border: #dadce0;
+  --ppv-danger: #d93025;
+  --ppv-shadow-1: 0 1px 2px rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  --ppv-shadow-2: 0 1px 2px rgb(60 64 67 / 30%), 0 2px 6px 2px rgb(60 64 67 / 15%);
+  --ppv-shadow-3: 0 1px 3px rgb(60 64 67 / 30%), 0 4px 8px 3px rgb(60 64 67 / 15%);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--ppv-bg-app);
+  color: var(--ppv-text-primary);
+  font:
+    14px/1.4 Roboto,
+    "Google Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Helvetica Neue",
+    Arial,
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.ppv-root * {
+  box-sizing: border-box;
+}
+.ppv-toolbar,
+.ppv-statusbar,
+.ppv-sidebar,
+.ppv-findbar,
+.ppv-btn,
+.ppv-select,
+.ppv-page-input,
+.ppv-find-input {
+  user-select: none;
+}
+
+/* ---------------- 工具栏 ---------------- */
+.ppv-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 8px;
+  background: var(--ppv-surface);
+  border-bottom: 1px solid var(--ppv-border);
+  box-shadow: var(--ppv-shadow-1);
+  z-index: 20;
+}
+.ppv-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 0 6px;
+}
+.ppv-group + .ppv-group {
+  border-left: 1px solid var(--ppv-border);
+}
+
+.ppv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ppv-text-primary);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background-color 0.15s ease;
+}
+.ppv-btn:hover:not(:disabled) {
+  background: var(--ppv-hover);
+}
+.ppv-btn:active:not(:disabled) {
+  background: #e4e6e9;
+}
+.ppv-btn:focus-visible {
+  outline: 2px solid var(--ppv-primary);
+  outline-offset: -2px;
+}
+.ppv-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.ppv-btn.active {
+  background: var(--ppv-selected-bg);
+}
+.ppv-btn.active:hover {
+  background: #dbe7fd;
+}
+.ppv-icon {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  /* 内联线条图标，颜色跟随 currentColor（浅色主题默认 #202124） */
+}
+
+.ppv-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.ppv-page-input {
+  width: 44px;
+  height: 32px;
+  padding: 0 4px;
+  text-align: center;
+  color: var(--ppv-text-primary);
+  background: var(--ppv-bg-input);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.ppv-page-input:hover {
+  background: #e8eaed;
+}
+.ppv-page-input:focus {
+  background: var(--ppv-surface);
+  border-color: var(--ppv-primary);
+  box-shadow: 0 0 0 1px var(--ppv-primary) inset;
+}
+.ppv-page-total {
+  color: var(--ppv-text-tertiary);
+}
+
+.ppv-select {
+  height: 32px;
+  max-width: 160px;
+  padding: 0 8px;
+  color: var(--ppv-text-primary);
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 8px;
+  font: inherit;
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.ppv-select:hover {
+  border-color: #bdc1c6;
+}
+.ppv-select:focus {
+  border-color: var(--ppv-primary);
+  box-shadow: 0 0 0 1px var(--ppv-primary) inset;
+}
+.ppv-zoom-select {
+  min-width: 96px;
+}
+.ppv-zoom-label {
+  display: inline-block;
+  min-width: 46px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ppv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ppv-title {
+  flex: 1 1 auto;
+  text-align: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ppv-text-secondary);
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.ppv-title:empty {
+  display: none;
+}
+
+/* ---------------- 主区域 ---------------- */
+.ppv-body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+.ppv-main {
+  flex: 1 1 auto;
+  position: relative;
+  min-width: 0;
+}
+
+/* 滚动容器：PDFViewer 强制要求 position:absolute */
+.ppv-viewer-container {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  background: var(--ppv-bg-app);
+  outline: none;
+}
+
+/* 页面卡片化：去掉 pdf.js 的透明描边，改用投影 */
+.ppv-root .pdfViewer .page {
+  border: 0;
+  margin: 16px auto;
+  border-radius: 2px;
+  box-shadow: var(--ppv-shadow-2);
+  background-color: #ffffff;
+}
+.ppv-root .pdfViewer .dummyPage {
+  height: var(--viewer-container-height);
+}
+.ppv-root .pdfViewer:is(.scrollHorizontal, .scrollWrapped) .page {
+  margin: 16px;
+}
+
+/* 滚动条 */
+.ppv-viewer-container::-webkit-scrollbar,
+.ppv-thumbnails::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.ppv-viewer-container::-webkit-scrollbar-thumb,
+.ppv-thumbnails::-webkit-scrollbar-thumb {
+  background: #c4c7c5;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.ppv-viewer-container::-webkit-scrollbar-thumb:hover,
+.ppv-thumbnails::-webkit-scrollbar-thumb:hover {
+  background: #a8acaa;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.ppv-viewer-container::-webkit-scrollbar-corner,
+.ppv-thumbnails::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------------- 缩略图侧栏 ---------------- */
+.ppv-sidebar {
+  flex: 0 0 auto;
+  width: 180px;
+  display: none;
+  flex-direction: column;
+  background: var(--ppv-surface);
+  border-right: 1px solid var(--ppv-border);
+  z-index: 10;
+}
+.ppv-sidebar.open {
+  display: flex;
+}
+.ppv-sidebar-header {
+  flex: 0 0 auto;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 14px;
+  border-bottom: 1px solid var(--ppv-border);
+  color: var(--ppv-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+.ppv-thumbnails {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: auto;
+  padding: 12px 10px;
+  background: #f8f9fa;
+}
+.ppv-thumb {
+  position: relative;
+  margin: 0 auto 12px;
+  background: #ffffff;
+  border: 1px solid #d2d4d6;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgb(60 64 67 / 25%);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: center;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+.ppv-thumb:hover {
+  border-color: var(--ppv-primary);
+  box-shadow: 0 1px 3px rgb(60 64 67 / 35%);
+}
+.ppv-thumb.selected {
+  border: 2px solid var(--ppv-primary);
+  box-shadow: 0 1px 4px rgb(26 115 232 / 45%);
+}
+.ppv-thumb canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.ppv-thumb-label {
+  position: absolute;
+  inset-inline-end: 2px;
+  bottom: 2px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: #fff;
+  background: rgb(32 33 36 / 60%);
+  border-radius: 3px;
+  pointer-events: none;
+}
+.ppv-thumb .ppv-thumb-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+}
+
+/* ---------------- 查找栏 ---------------- */
+.ppv-findbar {
+  position: absolute;
+  top: 56px;
+  right: 8px;
+  z-index: 30;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
+}
+.ppv-findbar-search {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--ppv-text-secondary);
+}
+.ppv-findbar-search svg {
+  width: 17px;
+  height: 17px;
+}
+.ppv-findbar.open {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: min(600px, calc(100% - 16px));
+}
+.ppv-find-input {
+  width: 240px;
+  height: 36px;
+  padding: 0 12px;
+  color: var(--ppv-text-primary);
+  background: var(--ppv-bg-input);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.ppv-find-input:hover {
+  background: #e8eaed;
+}
+.ppv-find-input:focus {
+  background: var(--ppv-surface);
+  border-color: var(--ppv-primary);
+  box-shadow: 0 0 0 1px var(--ppv-primary) inset;
+}
+.ppv-find-count {
+  min-width: 64px;
+  text-align: center;
+  color: var(--ppv-text-secondary);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ppv-find-count.not-found {
+  color: var(--ppv-danger);
+}
+.ppv-find-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ppv-text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+}
+.ppv-find-option input {
+  accent-color: var(--ppv-primary);
+  cursor: pointer;
+}
+
+/* ---------------- 状态栏 ---------------- */
+.ppv-statusbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 28px;
+  padding: 0 14px;
+  background: var(--ppv-surface);
+  border-top: 1px solid var(--ppv-border);
+  color: var(--ppv-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ppv-statusbar .ppv-spacer {
+  flex: 1 1 auto;
+}
+.ppv-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ppv-status-item .ppv-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+/* ---------------- 加载进度条 ---------------- */
+.ppv-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 40;
+  background: #e0e0e0;
+  display: none;
+}
+.ppv-progress.visible {
+  display: block;
+}
+.ppv-progress .ppv-progress-indicator {
+  height: 100%;
+  width: 0;
+  background: var(--ppv-primary);
+  transition: width 0.15s ease;
+}
+@keyframes ppv-indeterminate {
+  0% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
+/* ---------------- 加载/错误浮层 ---------------- */
+.ppv-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: #f8f9fa;
+  color: var(--ppv-text-primary);
+  text-align: center;
+  padding: 24px;
+}
+.ppv-overlay.hidden {
+  display: none;
+}
+.ppv-overlay .ppv-overlay-title {
+  font-size: 15px;
+  color: var(--ppv-text-primary);
+}
+.ppv-overlay .ppv-overlay-detail {
+  font-size: 12px;
+  color: var(--ppv-text-secondary);
+  max-width: 480px;
+  word-break: break-all;
+}
+.ppv-overlay .ppv-overlay-error {
+  color: var(--ppv-danger);
+}
+.ppv-overlay .ppv-overlay-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.ppv-overlay-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ppv-primary);
+  color: var(--ppv-on-primary);
+  font: 500 13px/1 inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.ppv-overlay-btn:hover {
+  background: var(--ppv-primary-hover);
+  box-shadow: var(--ppv-shadow-1);
+}
+.ppv-overlay-btn:active {
+  background: var(--ppv-primary-active);
+}
+.ppv-overlay-btn.secondary {
+  background: transparent;
+  color: var(--ppv-primary);
+}
+.ppv-overlay-btn.secondary:hover {
+  background: var(--ppv-selected-bg);
+  box-shadow: none;
+}
+.ppv-overlay .ppv-password-input {
+  width: 240px;
+  height: 36px;
+  padding: 0 12px;
+  color: var(--ppv-text-primary);
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 8px;
+  font: inherit;
+  outline: none;
+}
+.ppv-overlay .ppv-password-input:focus {
+  border-color: var(--ppv-primary);
+  box-shadow: 0 0 0 1px var(--ppv-primary) inset;
+}
+
+.ppv-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #d7dce0;
+  border-top-color: var(--ppv-primary);
+  border-radius: 50%;
+  animation: ppv-spin 0.9s linear infinite;
+}
+@keyframes ppv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------------- 演示模式（全屏） ---------------- */
+.ppv-root.ppv-presentation .ppv-toolbar,
+.ppv-root.ppv-presentation .ppv-statusbar,
+.ppv-root.ppv-presentation .ppv-sidebar,
+.ppv-root.ppv-presentation .ppv-findbar {
+  display: none !important;
+}
+.ppv-root.ppv-presentation .ppv-viewer-container {
+  background: #000;
+}
+.ppv-root.ppv-presentation .ppv-body {
+  position: absolute;
+  inset: 0;
+}
+.ppv-root:fullscreen {
+  width: 100%;
+  height: 100%;
+}
+.ppv-root:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------- 小屏适配 ---------------- */
+@media (max-width: 720px) {
+  .ppv-title {
+    display: none;
+  }
+  .ppv-sidebar {
+    width: 140px;
+  }
+  .ppv-find-input {
+    width: 160px;
+  }
+  .ppv-hide-sm {
+    display: none !important;
+  }
+}
+
+/* ---------------- 标绘层 ---------------- */
+.ppv-mark-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  touch-action: none;
+  pointer-events: none;
+}
+
+/* ---------------- 标绘面板 ---------------- */
+.ppv-mark-panel {
+  position: absolute;
+  left: 8px;
+  bottom: 36px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
+  max-width: calc(100% - 16px);
+}
+.ppv-mark-panel[hidden] {
+  display: none;
+}
+.ppv-mark-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.ppv-mark-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ppv-text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.ppv-mark-btn svg {
+  width: 19px;
+  height: 19px;
+}
+.ppv-mark-btn:hover:not(:disabled) {
+  background: var(--ppv-hover);
+}
+.ppv-mark-btn:active:not(:disabled) {
+  background: #e4e6e9;
+}
+.ppv-mark-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.ppv-mark-btn.active {
+  background: var(--ppv-selected-bg);
+  color: var(--ppv-primary);
+}
+.ppv-mark-btn.active:hover {
+  background: #dbe7fd;
+}
+
+.ppv-mark-style-row {
+  padding-top: 6px;
+  border-top: 1px solid var(--ppv-border);
+}
+.ppv-mark-colors {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.ppv-mark-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.ppv-mark-swatch:hover {
+  transform: scale(1.15);
+}
+.ppv-mark-swatch.active {
+  border-color: var(--ppv-text-primary);
+  box-shadow: 0 0 0 2px var(--ppv-surface) inset;
+}
+.ppv-mark-color-input {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+}
+.ppv-mark-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.ppv-mark-color-input::-webkit-color-swatch {
+  border: 1px solid var(--ppv-border);
+  border-radius: 50%;
+}
+.ppv-mark-widths {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.ppv-mark-width {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.ppv-mark-width:hover {
+  background: var(--ppv-hover);
+}
+.ppv-mark-width span {
+  display: block;
+  background: var(--ppv-text-secondary);
+  border-radius: 50%;
+  transition: background-color 0.15s ease;
+}
+.ppv-mark-width.active {
+  background: var(--ppv-selected-bg);
+}
+.ppv-mark-width.active span {
+  background: var(--ppv-primary);
+}
+.ppv-mark-fill {
+  margin-left: 4px;
+}
+.ppv-mark-action-row {
+  padding-top: 6px;
+  border-top: 1px solid var(--ppv-border);
+}

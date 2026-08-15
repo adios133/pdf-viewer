@@ -1,0 +1,42 @@
+{
+  "name": "pdf",
+  "version": "1.0.0",
+  "description": "基于 pdf.js 的 PDF 预览插件（对齐浏览器内置查看器，支持大文件）",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && npm run lint && npm run build",
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "gen:sample": "node scripts/make-sample-pdf.mjs public/sample.pdf",
+    "gen:large": "PAGES=500 node scripts/make-sample-pdf.mjs public/large.pdf",
+    "smoke": "node scripts/smoke-test.mjs"
+  },
+  "keywords": [
+    "pdf",
+    "pdf.js",
+    "viewer",
+    "preview",
+    "pdfjs-dist"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.66.0",
+    "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^6.2.108"
+  }
+}
