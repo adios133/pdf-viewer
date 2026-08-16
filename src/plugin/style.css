@@ -364,9 +364,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--ppv-text-secondary);
+  flex: 0 0 auto;
+  color: var(--ppv-text-tertiary);
 }
 .ppv-findbar-search svg {
   width: 17px;
@@ -374,51 +373,100 @@
 }
 .ppv-findbar.open {
   display: flex;
-  flex-wrap: wrap;
-  max-width: min(600px, calc(100% - 16px));
+  align-items: center;
+  gap: 2px;
+  max-width: min(620px, calc(100% - 16px));
 }
-.ppv-find-input {
-  width: 240px;
-  height: 36px;
-  padding: 0 12px;
-  color: var(--ppv-text-primary);
+
+/* 胶囊输入框：放大镜 + 输入 + 计数内嵌 */
+.ppv-find-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  min-width: 260px;
+  padding: 0 12px 0 14px;
   background: var(--ppv-bg-input);
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font: inherit;
-  outline: none;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
   transition:
     background-color 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
-.ppv-find-input:hover {
+.ppv-find-input-wrap:hover {
   background: #e8eaed;
 }
-.ppv-find-input:focus {
+.ppv-find-input-wrap:focus-within {
   background: var(--ppv-surface);
   border-color: var(--ppv-primary);
   box-shadow: 0 0 0 1px var(--ppv-primary) inset;
 }
+.ppv-find-input-wrap.not-found {
+  border-color: var(--ppv-danger);
+}
+.ppv-find-input-wrap.not-found:focus-within {
+  border-color: var(--ppv-danger);
+  box-shadow: 0 0 0 1px var(--ppv-danger) inset;
+}
+.ppv-find-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  color: var(--ppv-text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+  font: inherit;
+}
 .ppv-find-count {
-  min-width: 64px;
-  text-align: center;
-  color: var(--ppv-text-secondary);
-  font-size: 13px;
+  flex: 0 0 auto;
+  min-width: 52px;
+  text-align: right;
+  color: var(--ppv-text-tertiary);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .ppv-find-count.not-found {
   color: var(--ppv-danger);
 }
+
+/* 设置弹出区：区分大小写 / 高亮全部 */
+.ppv-find-settings {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+  padding: 6px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 10px;
+  box-shadow: var(--ppv-shadow-2);
+}
+.ppv-find-settings.open {
+  display: flex;
+}
 .ppv-find-option {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--ppv-text-secondary);
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--ppv-text-primary);
   white-space: nowrap;
   cursor: pointer;
   font-size: 13px;
-  padding: 0 4px;
+  transition: background-color 0.15s ease;
+}
+.ppv-find-option:hover {
+  background: var(--ppv-hover);
 }
 .ppv-find-option input {
   accent-color: var(--ppv-primary);
@@ -612,8 +660,9 @@
   .ppv-sidebar {
     width: 140px;
   }
-  .ppv-find-input {
-    width: 160px;
+  .ppv-find-input-wrap {
+    min-width: 0;
+    flex: 1 1 auto;
   }
   .ppv-hide-sm {
     display: none !important;

@@ -315,18 +315,22 @@ export class Toolbar {
 }
 
 /**
- * 查找栏：输入、前后匹配、区分大小写、高亮全部、匹配计数。
+ * 查找栏：胶囊输入框（内嵌搜索图标与匹配计数）+ 上/下一个 + 设置（齿轮展开选项）+ 关闭。
  */
 export class FindBar {
   readonly el: HTMLElement
   private readonly handler: ToolbarActionHandler
   private readonly input: HTMLInputElement
   private readonly countEl: HTMLElement
+  private readonly wrapEl: HTMLElement
   private readonly caseChk: HTMLInputElement
   private readonly highlightChk: HTMLInputElement
   private readonly btnPrev: HTMLButtonElement
   private readonly btnNext: HTMLButtonElement
+  private readonly settingsBtn: HTMLButtonElement
+  private readonly settingsEl: HTMLElement
   private opened = false
+  private settingsOpen = false
   private query = ""
 
   constructor(handler: ToolbarActionHandler) {
@@ -335,9 +339,15 @@ export class FindBar {
     this.el.className = "ppv-findbar"
     this.el.hidden = true
 
+    // ---- 胶囊输入框：放大镜 + 输入 + 计数 ----
+    const wrap = document.createElement("div")
+    wrap.className = "ppv-find-input-wrap"
+    this.wrapEl = wrap
+
     const searchIcon = document.createElement("span")
     searchIcon.className = "ppv-findbar-search"
     searchIcon.innerHTML = icons.search
+
     const input = document.createElement("input")
     input.className = "ppv-find-input"
     input.type = "text"
@@ -345,6 +355,12 @@ export class FindBar {
     input.autocomplete = "off"
     input.spellcheck = false
     this.input = input
+
+    const countEl = document.createElement("span")
+    countEl.className = "ppv-find-count"
+    this.countEl = countEl
+
+    wrap.append(searchIcon, input, countEl)
 
     // 输入防抖（兼顾中文输入法组合态）
     let timer: number | undefined
@@ -371,6 +387,7 @@ export class FindBar {
       }
     })
 
+    // ---- 操作按钮 ----
     const btnPrev = document.createElement("button")
     btnPrev.type = "button"
     btnPrev.className = "ppv-btn"
@@ -387,9 +404,25 @@ export class FindBar {
     btnNext.addEventListener("click", () => this.handler({ action: "find-next" }))
     this.btnNext = btnNext
 
-    const countEl = document.createElement("span")
-    countEl.className = "ppv-find-count"
-    this.countEl = countEl
+    const btnSettings = document.createElement("button")
+    btnSettings.type = "button"
+    btnSettings.className = "ppv-btn"
+    btnSettings.title = "查找选项"
+    btnSettings.innerHTML = icons.settings
+    btnSettings.addEventListener("click", () => this.toggleSettings())
+    this.settingsBtn = btnSettings
+
+    const btnClose = document.createElement("button")
+    btnClose.type = "button"
+    btnClose.className = "ppv-btn"
+    btnClose.title = "关闭查找 (Esc)"
+    btnClose.innerHTML = icons.close
+    btnClose.addEventListener("click", () => this.handler({ action: "find-close" }))
+
+    // ---- 设置区：区分大小写 / 高亮全部 ----
+    const settings = document.createElement("div")
+    settings.className = "ppv-find-settings"
+    this.settingsEl = settings
 
     const caseChk = document.createElement("label")
     caseChk.className = "ppv-find-option"
@@ -410,17 +443,17 @@ export class FindBar {
     highlightInput.addEventListener("change", () => this.emitFind())
     this.highlightChk = highlightInput
 
-    const btnClose = document.createElement("button")
-    btnClose.type = "button"
-    btnClose.className = "ppv-btn"
-    btnClose.title = "关闭查找 (Esc)"
-    btnClose.innerHTML = icons.close
-    btnClose.addEventListener("click", () => this.handler({ action: "find-close" }))
-
-    this.el.append(searchIcon, input, btnPrev, btnNext, countEl, caseChk, highlightChk, btnClose)
+    settings.append(caseChk, highlightChk)
+    this.el.append(wrap, btnPrev, btnNext, btnSettings, btnClose, settings)
   }
 
   private composing = false
+
+  private toggleSettings(): void {
+    this.settingsOpen = !this.settingsOpen
+    this.settingsBtn.classList.toggle("active", this.settingsOpen)
+    this.settingsEl.classList.toggle("open", this.settingsOpen)
+  }
 
   private emitFind(): void {
     const query = this.input.value
@@ -455,6 +488,7 @@ export class FindBar {
     this.opened = false
     this.el.hidden = true
     this.el.classList.remove("open")
+    if (this.settingsOpen) this.toggleSettings()
   }
 
   isOpen(): boolean {
@@ -473,13 +507,13 @@ export class FindBar {
    */
   setCount(current: number, total: number, state: number): void {
     const el = this.countEl
-    el.classList.remove("not-found")
+    const notFound = state === 1 || (state === 2 && total === 0)
+    el.classList.toggle("not-found", notFound)
+    this.wrapEl.classList.toggle("not-found", notFound)
     if (state === 1) {
       el.textContent = "未找到"
-      el.classList.add("not-found")
     } else if (state === 2) {
       el.textContent = total > 0 ? `${current} / ${total}（已回绕）` : "未找到"
-      if (total === 0) el.classList.add("not-found")
     } else if (state === 3) {
       el.textContent = "查找中…"
     } else if (total > 0) {

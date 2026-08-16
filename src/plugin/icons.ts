@@ -41,6 +41,10 @@ export const icons = {
   rotateCcw: svg(`<path d="M3 4v6h6"/><path d="M4.5 15a9 9 0 1 0 2.1-9.4L3 10"/>`),
   /** 查找 */
   search: svg(`<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>`),
+  /** 查找选项（设置） */
+  settings: svg(
+    `<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>`,
+  ),
   /** 上一个匹配 */
   findPrev: svg(`<path d="m15 18-6-6 6-6"/>`),
   /** 下一个匹配 */
