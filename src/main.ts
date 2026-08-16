@@ -16,7 +16,10 @@ export type {
   PdfPreviewEventListener,
   PdfPreviewOptions,
   PresetScale,
+  Theme,
+  ThemeInfo,
 } from "./plugin/types"
+export { THEMES } from "./plugin/types"
 export { downloadPdf } from "./plugin/download"
 export { printPdf } from "./plugin/print"
 export type { PrintOptions } from "./plugin/print"

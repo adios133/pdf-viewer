@@ -2,6 +2,24 @@ import type { PDFDocumentProxy } from "pdfjs-dist"
 import type { ScrollMode, SpreadMode } from "pdfjs-dist/types/web/ui_utils"
 import type { Mark } from "./marks/marks"
 
+/** 预设主题。 */
+export type Theme = "light" | "dark" | "sepia" | "green"
+
+/** 主题元信息（用于切换菜单展示）。 */
+export interface ThemeInfo {
+  id: Theme
+  label: string
+  /** 菜单里的色点预览。 */
+  dot: string
+}
+
+export const THEMES: ThemeInfo[] = [
+  { id: "light", label: "浅色", dot: "#ffffff" },
+  { id: "dark", label: "深色", dot: "#38383d" },
+  { id: "sepia", label: "护眼米黄", dot: "#efe4d0" },
+  { id: "green", label: "森林绿", dot: "#e6f0e2" },
+]
+
 /** 密码回调：reason 为 PasswordResponses 中的值（NEED_PASSWORD=1 / INCORRECT_PASSWORD=2）。 */
 export type PasswordCallback = (updatePassword: (password: string) => void, reason: number) => void
 
@@ -98,6 +116,12 @@ export interface PdfPreviewOptions {
   onRender?: (info: { pageNumber: number }) => void
   /** 标绘数据变化（增删/移动/撤销/导入导出）时触发。 */
   onMarksChange?: (marks: Mark[]) => void
+  /** 主题变化时触发。 */
+  onThemeChange?: (theme: Theme) => void
+  /** 初始主题，缺省 "light"。 */
+  theme?: Theme
+  /** 是否用 localStorage 记住主题，缺省 true。 */
+  persistTheme?: boolean
 }
 
 /** 插件事件名与载荷。 */
@@ -113,6 +137,8 @@ export type PdfPreviewEventMap = {
   pagesloaded: { numPages: number }
   /** 标绘数据变化。 */
   markschange: { marks: Mark[] }
+  /** 主题变化。 */
+  themechange: { theme: Theme }
 }
 
 export type PdfPreviewEventName = keyof PdfPreviewEventMap

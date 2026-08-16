@@ -1,5 +1,7 @@
 import { icons } from "./icons"
 import type { IconName } from "./icons"
+import { THEMES } from "./types"
+import type { Theme } from "./types"
 
 /** 工具栏动作：由 PdfPreview 统一处理。 */
 export type ToolbarAction =
@@ -28,6 +30,7 @@ export type ToolbarAction =
   | "download"
   | "fullscreen"
   | "toggle-marks"
+  | "theme-select"
 
 export interface ToolbarActionEvent {
   action: ToolbarAction
@@ -78,6 +81,7 @@ export class Toolbar {
   private readonly refs = {
     btnThumbnails: null as HTMLButtonElement | null,
     btnMarks: null as HTMLButtonElement | null,
+    btnTheme: null as HTMLButtonElement | null,
     btnFirst: null as HTMLButtonElement | null,
     btnPrev: null as HTMLButtonElement | null,
     btnNext: null as HTMLButtonElement | null,
@@ -198,7 +202,7 @@ export class Toolbar {
     this.el.appendChild(title)
     this.refs.title = title
 
-    // 右侧：标绘、旋转、查找、打印、下载、全屏
+    // 右侧：标绘、旋转、查找、打印、下载、全屏、主题
     const right = g(this.el)
     const btnMarks = button("editorInk", "标绘", "toggle-marks", handler)
     const btnRotateCcw = button("rotateCcw", "逆时针旋转 (Ctrl+Shift+R)", "rotate-ccw", handler)
@@ -207,12 +211,36 @@ export class Toolbar {
     const btnPrint = button("print", "打印 (Ctrl+P)", "print", handler)
     const btnDownload = button("download", "下载 (Ctrl+S)", "download", handler)
     const btnFullscreen = button("presentation", "全屏演示", "fullscreen", handler)
-    right.append(btnMarks, btnRotateCcw, btnRotateCw, btnFind, btnPrint, btnDownload, btnFullscreen)
+    const btnTheme = button("theme", "主题", "theme-select", handler)
+    btnTheme.addEventListener("click", () => this.themeMenu.toggle())
+    right.append(
+      btnMarks,
+      btnRotateCcw,
+      btnRotateCw,
+      btnFind,
+      btnPrint,
+      btnDownload,
+      btnFullscreen,
+      btnTheme,
+    )
     this.refs.btnMarks = btnMarks
     this.refs.btnFind = btnFind
     this.refs.btnPrint = btnPrint
     this.refs.btnDownload = btnDownload
     this.refs.btnFullscreen = btnFullscreen
+    this.refs.btnTheme = btnTheme
+    this.themeMenu = new ThemeMenu(handler, btnTheme)
+  }
+
+  /** 主题切换菜单（挂载到插件根节点，由 PdfPreview 负责 append）。 */
+  readonly themeMenu: ThemeMenu
+
+  setTheme(theme: Theme): void {
+    this.themeMenu.setActive(theme)
+  }
+
+  destroy(): void {
+    this.themeMenu.destroy()
   }
 
   /** 文档就绪后启用导航/缩放控件。 */
@@ -587,4 +615,85 @@ function formatSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${bytes} B`
+}
+
+/**
+ * 主题切换菜单：预设主题列表（色点预览 + 勾选当前主题），点击外部自动关闭。
+ */
+export class ThemeMenu {
+  readonly el: HTMLElement
+  private readonly handler: ToolbarActionHandler
+  private readonly anchor: HTMLElement
+  private readonly items = new Map<Theme, HTMLButtonElement>()
+  private open = false
+  private readonly onOutside = (e: PointerEvent) => {
+    if (!this.open) return
+    const target = e.target as Node | null
+    if (target && !this.el.contains(target) && !this.anchor.contains(target)) {
+      this.close()
+    }
+  }
+
+  constructor(handler: ToolbarActionHandler, anchor: HTMLElement) {
+    this.handler = handler
+    this.anchor = anchor
+    this.el = document.createElement("div")
+    this.el.className = "ppv-theme-menu"
+
+    for (const theme of THEMES) {
+      const item = document.createElement("button")
+      item.type = "button"
+      item.className = "ppv-theme-item"
+      item.dataset.theme = theme.id
+      const dot = document.createElement("span")
+      dot.className = "ppv-theme-dot"
+      dot.style.backgroundColor = theme.dot
+      const label = document.createElement("span")
+      label.className = "ppv-theme-label"
+      label.textContent = theme.label
+      const check = document.createElement("span")
+      check.className = "ppv-theme-check"
+      check.innerHTML = icons.close
+      check.style.visibility = "hidden"
+      item.append(dot, label, check)
+      item.addEventListener("click", () => {
+        this.handler({ action: "theme-select", payload: theme.id })
+        this.close()
+      })
+      this.el.appendChild(item)
+      this.items.set(theme.id, item)
+    }
+
+    document.addEventListener("pointerdown", this.onOutside)
+  }
+
+  toggle(): void {
+    if (this.open) this.close()
+    else this.openMenu()
+  }
+
+  openMenu(): void {
+    this.open = true
+    this.el.classList.add("open")
+    this.anchor.classList.add("active")
+  }
+
+  close(): void {
+    this.open = false
+    this.el.classList.remove("open")
+    this.anchor.classList.remove("active")
+  }
+
+  setActive(theme: Theme): void {
+    for (const [id, item] of this.items) {
+      const active = id === theme
+      item.classList.toggle("active", active)
+      const check = item.querySelector<HTMLElement>(".ppv-theme-check")
+      if (check) check.style.visibility = active ? "visible" : "hidden"
+    }
+  }
+
+  destroy(): void {
+    document.removeEventListener("pointerdown", this.onOutside)
+  }
 }

@@ -1,23 +1,34 @@
 /*
- * pdf 预览插件样式 —— Material 浅色风格（页面本身样式由 pdf_viewer.css 提供）。
+ * pdf 预览插件样式（页面本身样式由 pdf_viewer.css 提供）。
+ * 主题通过 .ppv-root 上的 data-theme 切换（浅色 / 深色 / 护眼米黄 / 森林绿）。
  * 所有类名前缀 ppv- 以避免与宿主页面冲突。
  */
 
+/* ---------------- 浅色（默认） ---------------- */
 .ppv-root {
   --ppv-primary: #1a73e8;
   --ppv-primary-hover: #1765cc;
   --ppv-primary-active: #1557b0;
   --ppv-on-primary: #ffffff;
   --ppv-selected-bg: #e8f0fe;
+  --ppv-selected-hover: #dbe7fd;
   --ppv-surface: #ffffff;
   --ppv-bg-app: #e8eaed;
   --ppv-bg-input: #f1f3f4;
+  --ppv-bg-input-hover: #e8eaed;
   --ppv-hover: #f1f3f4;
+  --ppv-hover-strong: #e4e6e9;
   --ppv-text-primary: #202124;
   --ppv-text-secondary: #5f6368;
   --ppv-text-tertiary: #9aa0a6;
   --ppv-border: #dadce0;
   --ppv-danger: #d93025;
+  --ppv-sidebar-bg: #f8f9fa;
+  --ppv-overlay-bg: #f8f9fa;
+  --ppv-progress-track: #e0e0e0;
+  --ppv-scrollbar: #c4c7c5;
+  --ppv-scrollbar-hover: #a8acaa;
+  --ppv-spinner-track: #d7dce0;
   --ppv-shadow-1: 0 1px 2px rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
   --ppv-shadow-2: 0 1px 2px rgb(60 64 67 / 30%), 0 2px 6px 2px rgb(60 64 67 / 15%);
   --ppv-shadow-3: 0 1px 3px rgb(60 64 67 / 30%), 0 4px 8px 3px rgb(60 64 67 / 15%);
@@ -40,6 +51,96 @@
     sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+/* ---------------- 深色 ---------------- */
+.ppv-root[data-theme="dark"] {
+  --ppv-primary: #8ab4f8;
+  --ppv-primary-hover: #aecbfa;
+  --ppv-primary-active: #93b9f8;
+  --ppv-on-primary: #202124;
+  --ppv-selected-bg: rgb(138 180 248 / 16%);
+  --ppv-selected-hover: rgb(138 180 248 / 28%);
+  --ppv-surface: #202124;
+  --ppv-bg-app: #38383d;
+  --ppv-bg-input: #3c4043;
+  --ppv-bg-input-hover: #45494d;
+  --ppv-hover: #3c4043;
+  --ppv-hover-strong: #45494d;
+  --ppv-text-primary: #e8eaed;
+  --ppv-text-secondary: #bdc1c6;
+  --ppv-text-tertiary: #9aa0a6;
+  --ppv-border: #5f6368;
+  --ppv-danger: #f28b82;
+  --ppv-sidebar-bg: #292a2d;
+  --ppv-overlay-bg: #292a2d;
+  --ppv-progress-track: #3c4043;
+  --ppv-scrollbar: #5f6368;
+  --ppv-scrollbar-hover: #80868b;
+  --ppv-spinner-track: #4a4d51;
+  --ppv-shadow-1: 0 1px 2px rgb(0 0 0 / 40%), 0 1px 3px 1px rgb(0 0 0 / 30%);
+  --ppv-shadow-2: 0 1px 2px rgb(0 0 0 / 40%), 0 2px 6px 2px rgb(0 0 0 / 30%);
+  --ppv-shadow-3: 0 1px 3px rgb(0 0 0 / 40%), 0 4px 8px 3px rgb(0 0 0 / 30%);
+}
+
+/* ---------------- 护眼米黄 ---------------- */
+.ppv-root[data-theme="sepia"] {
+  --ppv-primary: #8d6e63;
+  --ppv-primary-hover: #7d6157;
+  --ppv-primary-active: #6f554c;
+  --ppv-on-primary: #ffffff;
+  --ppv-selected-bg: #ecdfc8;
+  --ppv-selected-hover: #e3d3b8;
+  --ppv-surface: #faf3e6;
+  --ppv-bg-app: #efe4d0;
+  --ppv-bg-input: #f0e7d3;
+  --ppv-bg-input-hover: #e9ddc4;
+  --ppv-hover: #f0e6d2;
+  --ppv-hover-strong: #e7dbc0;
+  --ppv-text-primary: #3d2f20;
+  --ppv-text-secondary: #6d5945;
+  --ppv-text-tertiary: #9a8570;
+  --ppv-border: #d9c9ab;
+  --ppv-danger: #b3261e;
+  --ppv-sidebar-bg: #f5ecd9;
+  --ppv-overlay-bg: #f5ecd9;
+  --ppv-progress-track: #ddd0b4;
+  --ppv-scrollbar: #cfbf9f;
+  --ppv-scrollbar-hover: #b8a888;
+  --ppv-spinner-track: #d9cbb0;
+  --ppv-shadow-1: 0 1px 2px rgb(80 60 30 / 25%), 0 1px 3px 1px rgb(80 60 30 / 12%);
+  --ppv-shadow-2: 0 1px 2px rgb(80 60 30 / 25%), 0 2px 6px 2px rgb(80 60 30 / 12%);
+  --ppv-shadow-3: 0 1px 3px rgb(80 60 30 / 25%), 0 4px 8px 3px rgb(80 60 30 / 12%);
+}
+
+/* ---------------- 森林绿 ---------------- */
+.ppv-root[data-theme="green"] {
+  --ppv-primary: #2e7d32;
+  --ppv-primary-hover: #276b2b;
+  --ppv-primary-active: #205c24;
+  --ppv-on-primary: #ffffff;
+  --ppv-selected-bg: #e2f0e0;
+  --ppv-selected-hover: #d4e8d1;
+  --ppv-surface: #f6faf4;
+  --ppv-bg-app: #e6f0e2;
+  --ppv-bg-input: #edf4ea;
+  --ppv-bg-input-hover: #e0ecdc;
+  --ppv-hover: #edf4ea;
+  --ppv-hover-strong: #dfeadb;
+  --ppv-text-primary: #1d2b1c;
+  --ppv-text-secondary: #4e664b;
+  --ppv-text-tertiary: #7d9479;
+  --ppv-border: #c8dcc3;
+  --ppv-danger: #b3261e;
+  --ppv-sidebar-bg: #f0f7ee;
+  --ppv-overlay-bg: #f0f7ee;
+  --ppv-progress-track: #d5e6d1;
+  --ppv-scrollbar: #b7cfb1;
+  --ppv-scrollbar-hover: #9fbb98;
+  --ppv-spinner-track: #cfe2cb;
+  --ppv-shadow-1: 0 1px 2px rgb(30 60 25 / 22%), 0 1px 3px 1px rgb(30 60 25 / 10%);
+  --ppv-shadow-2: 0 1px 2px rgb(30 60 25 / 22%), 0 2px 6px 2px rgb(30 60 25 / 10%);
+  --ppv-shadow-3: 0 1px 3px rgb(30 60 25 / 22%), 0 4px 8px 3px rgb(30 60 25 / 10%);
 }
 .ppv-root * {
   box-sizing: border-box;
@@ -98,7 +199,7 @@
   background: var(--ppv-hover);
 }
 .ppv-btn:active:not(:disabled) {
-  background: #e4e6e9;
+  background: var(--ppv-hover-strong);
 }
 .ppv-btn:focus-visible {
   outline: 2px solid var(--ppv-primary);
@@ -112,7 +213,7 @@
   background: var(--ppv-selected-bg);
 }
 .ppv-btn.active:hover {
-  background: #dbe7fd;
+  background: var(--ppv-selected-hover);
 }
 .ppv-icon {
   width: 20px;
@@ -144,7 +245,7 @@
     border-color 0.15s ease;
 }
 .ppv-page-input:hover {
-  background: #e8eaed;
+  background: var(--ppv-bg-input-hover);
 }
 .ppv-page-input:focus {
   background: var(--ppv-surface);
@@ -250,14 +351,14 @@
 }
 .ppv-viewer-container::-webkit-scrollbar-thumb,
 .ppv-thumbnails::-webkit-scrollbar-thumb {
-  background: #c4c7c5;
+  background: var(--ppv-scrollbar);
   border-radius: 5px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 .ppv-viewer-container::-webkit-scrollbar-thumb:hover,
 .ppv-thumbnails::-webkit-scrollbar-thumb:hover {
-  background: #a8acaa;
+  background: var(--ppv-scrollbar-hover);
   border: 2px solid transparent;
   background-clip: content-box;
 }
@@ -296,7 +397,7 @@
   position: relative;
   overflow: auto;
   padding: 12px 10px;
-  background: #f8f9fa;
+  background: var(--ppv-sidebar-bg);
 }
 .ppv-thumb {
   position: relative;
@@ -395,7 +496,7 @@
     box-shadow 0.15s ease;
 }
 .ppv-find-input-wrap:hover {
-  background: #e8eaed;
+  background: var(--ppv-bg-input-hover);
 }
 .ppv-find-input-wrap:focus-within {
   background: var(--ppv-surface);
@@ -512,7 +613,7 @@
   right: 0;
   height: 3px;
   z-index: 40;
-  background: #e0e0e0;
+  background: var(--ppv-progress-track);
   display: none;
 }
 .ppv-progress.visible {
@@ -546,7 +647,7 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: #f8f9fa;
+  background: var(--ppv-overlay-bg);
   color: var(--ppv-text-primary);
   text-align: center;
   padding: 24px;
@@ -618,7 +719,7 @@
 .ppv-spinner {
   width: 34px;
   height: 34px;
-  border: 3px solid #d7dce0;
+  border: 3px solid var(--ppv-spinner-track);
   border-top-color: var(--ppv-primary);
   border-radius: 50%;
   animation: ppv-spin 0.9s linear infinite;
@@ -727,7 +828,7 @@
   background: var(--ppv-hover);
 }
 .ppv-mark-btn:active:not(:disabled) {
-  background: #e4e6e9;
+  background: var(--ppv-hover-strong);
 }
 .ppv-mark-btn:disabled {
   opacity: 0.38;
@@ -738,7 +839,7 @@
   color: var(--ppv-primary);
 }
 .ppv-mark-btn.active:hover {
-  background: #dbe7fd;
+  background: var(--ppv-selected-hover);
 }
 
 .ppv-mark-style-row {
@@ -822,4 +923,62 @@
 .ppv-mark-action-row {
   padding-top: 6px;
   border-top: 1px solid var(--ppv-border);
+}
+
+/* ---------------- 主题切换菜单 ---------------- */
+.ppv-theme-menu {
+  position: absolute;
+  top: 56px;
+  right: 8px;
+  z-index: 35;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
+}
+.ppv-theme-menu.open {
+  display: flex;
+}
+.ppv-theme-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ppv-text-primary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.ppv-theme-item:hover {
+  background: var(--ppv-hover);
+}
+.ppv-theme-item.active {
+  background: var(--ppv-selected-bg);
+  color: var(--ppv-primary);
+}
+.ppv-theme-dot {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--ppv-border);
+}
+.ppv-theme-check {
+  margin-left: auto;
+  display: inline-flex;
+  color: var(--ppv-primary);
+}
+.ppv-theme-check svg {
+  width: 16px;
+  height: 16px;
 }

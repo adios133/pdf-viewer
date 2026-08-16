@@ -41,6 +41,10 @@ preview.setMarks([...]) / preview.getMarks() / preview.clearMarks()
 preview.exportMarks() / preview.importMarks(json)
 preview.on("markschange", ({ marks }) => ...)
 
+// 主题
+preview.setTheme("dark")            // light | dark | sepia | green
+preview.getTheme() / preview.on("themechange", ({ theme }) => ...)
+
 // 交互 API
 preview.gotoPage(12)
 preview.nextPage()
@@ -72,6 +76,8 @@ preview.destroy()
 - 打印（隐藏 iframe 逐页渲染）、下载（同源直链 / getData 兜底）
 - 标绘层：画笔/直线/箭头/矩形/椭圆/多边形/折线/文字标注，颜色/线宽/填充可调，
   选择移动、撤销重做、清空、JSON 导入导出；随缩放/旋转自动同步
+- 主题切换：预设浅色 / 深色 / 护眼米黄 / 森林绿 4 套主题，
+  工具栏调色板按钮一键切换，localStorage 记忆（`persistTheme: false` 关闭）
 - 全屏演示模式（页面居中、方向键翻页）
 - 键盘快捷键：`f` 查找、`t` 缩略图、`d` 下载、`p` 打印、`r` 旋转、
   `Ctrl/Cmd+F/P/S/0/+/-`、`PageUp/PageDown`、`Home/End`（输入框内不拦截）

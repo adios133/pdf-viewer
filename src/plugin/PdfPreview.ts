@@ -33,7 +33,9 @@ import type {
   PdfPreviewEventName,
   PdfPreviewEventListener,
   PdfPreviewOptions,
+  Theme,
 } from "./types"
+import { THEMES } from "./types"
 import { MarkLayerManager } from "./marks/marks"
 import type { Mark, MarkTool } from "./marks/marks"
 import { MarkPanel } from "./marks/MarkPanel"
@@ -42,6 +44,7 @@ import { icons } from "./icons"
 const DEFAULT_CMAP_URL = `${import.meta.env.BASE_URL || "/"}pdfjs/cmaps/`
 const DEFAULT_STD_FONT_URL = `${import.meta.env.BASE_URL || "/"}pdfjs/standard_fonts/`
 const IDLE_CLEANUP_DELAY = 5000
+const THEME_STORAGE_KEY = "pdf-preview:theme"
 
 type PDFViewerInstance = InstanceType<ViewerModule["PDFViewer"]>
 type PDFLinkServiceInstance = InstanceType<ViewerModule["PDFLinkService"]>
@@ -89,6 +92,7 @@ export class PdfPreview {
   private currentPage = 0
   private scale = 1
   private rotation = 0
+  private theme: Theme = "light"
   private lastActivity = performance.now()
   private cleanupTimer: number | null = null
   private findState = 0
@@ -176,8 +180,11 @@ export class PdfPreview {
     this.root.append(this.toolbar.el, body, this.statusBar.el, this.findBar.el)
     this.root.append(this.progressEl, this.overlayEl)
     this.root.appendChild(this.markPanel.el)
+    this.root.appendChild(this.toolbar.themeMenu.el)
 
     this.attach(options.container)
+
+    this.applyTheme(this.resolveInitialTheme(), false)
 
     this.toolbar.setEnabled(false)
     document.addEventListener("keydown", this.onKeyDown)
@@ -417,6 +424,61 @@ export class PdfPreview {
     input.click()
   }
 
+  // ---- 主题 ----
+
+  /** 切换主题（light / dark / sepia / green）。 */
+  setTheme(theme: Theme): void {
+    if (!THEMES.some((t) => t.id === theme)) return
+    if (theme === this.theme) return
+    this.applyTheme(theme, true)
+  }
+
+  getTheme(): Theme {
+    return this.theme
+  }
+
+  /** 打开/关闭主题切换菜单。 */
+  toggleThemeMenu(open?: boolean): void {
+    if (open === undefined) {
+      this.toolbar.themeMenu.toggle()
+    } else if (open) {
+      this.toolbar.themeMenu.openMenu()
+    } else {
+      this.toolbar.themeMenu.close()
+    }
+  }
+
+  private applyTheme(theme: Theme, notify: boolean): void {
+    this.theme = theme
+    this.root.dataset.theme = theme
+    this.toolbar.setTheme(theme)
+    if (this.options.persistTheme !== false) {
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+      } catch {
+        /* 隐私模式等场景忽略 */
+      }
+    }
+    if (notify) {
+      this.emit("themechange", { theme })
+      this.options.onThemeChange?.(theme)
+    }
+  }
+
+  private resolveInitialTheme(): Theme {
+    const fromOptions = this.options.theme
+    if (fromOptions && THEMES.some((t) => t.id === fromOptions)) return fromOptions
+    if (this.options.persistTheme !== false) {
+      try {
+        const stored = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null
+        if (stored && THEMES.some((t) => t.id === stored)) return stored
+      } catch {
+        /* ignore */
+      }
+    }
+    return "light"
+  }
+
   async print(): Promise<void> {
     const doc = this.pdfDocument
     if (!doc) return
@@ -503,6 +565,7 @@ export class PdfPreview {
     this.thumbSidebar.destroy()
     this.markManager.destroy()
     this.markPanel.el.remove()
+    this.toolbar.destroy()
     try {
       this.viewer?.cleanup()
     } catch {
@@ -1036,6 +1099,9 @@ export class PdfPreview {
         break
       case "toggle-marks":
         this.toggleMarks()
+        break
+      case "theme-select":
+        this.setTheme(e.payload as Theme)
         break
     }
   }

@@ -63,6 +63,10 @@ export const icons = {
   ),
   /** 标绘 */
   editorInk: svg(`<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>`),
+  /** 主题切换（调色板） */
+  theme: svg(
+    `<circle cx="12" cy="12" r="9"/><circle cx="8.2" cy="8.6" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.6" cy="9.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15.2" r="1.2" fill="currentColor" stroke="none"/>`,
+  ),
   /** 关闭 */
   close: svg(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`),
 } as const

@@ -330,6 +330,52 @@ try {
   const panelClosed = await evalJs(`document.querySelector('.ppv-mark-panel').hidden`)
   console.log(`MARKS PANEL CLOSED: ${panelClosed}`)
 
+  // ================= 主题切换测试 =================
+  // 1. 打开主题菜单
+  await evalJs(`document.querySelector('button[title="主题"]').click()`)
+  await sleep(250)
+  const themeMenu = await evalJs(`(() => {
+    const m = document.querySelector('.ppv-theme-menu');
+    return {
+      open: m.classList.contains('open'),
+      items: m.querySelectorAll('.ppv-theme-item').length,
+      labels: [...m.querySelectorAll('.ppv-theme-label')].map(e => e.textContent).join(','),
+      active: m.querySelector('.ppv-theme-item.active')?.dataset.theme ?? 'none',
+    };
+  })()`)
+  console.log(`THEME MENU:`, JSON.stringify(themeMenu))
+
+  // 2. 切到深色：验证 data-theme、工具栏背景、页面背景
+  await evalJs(`document.querySelector('.ppv-theme-item[data-theme="dark"]').click()`)
+  await sleep(300)
+  const darkCheck = await evalJs(`(() => {
+    const root = document.querySelector('.ppv-root');
+    return {
+      theme: root.dataset.theme,
+      toolbarBg: getComputedStyle(document.querySelector('.ppv-toolbar')).backgroundColor,
+      appBg: getComputedStyle(document.querySelector('.ppv-viewer-container')).backgroundColor,
+      stored: localStorage.getItem('pdf-preview:theme'),
+    };
+  })()`)
+  console.log(`THEME DARK:`, JSON.stringify(darkCheck))
+
+  // 3. API 切换：森林绿 + 事件
+  await evalJs(`window.__ppvPreview.setTheme('green')`)
+  await sleep(250)
+  const greenCheck = await evalJs(`document.querySelector('.ppv-root').dataset.theme`)
+  // 4. 持久化 + 菜单勾选同步
+  await evalJs(`document.querySelector('button[title="主题"]').click()`)
+  await sleep(200)
+  const menuSync = await evalJs(
+    `document.querySelector('.ppv-theme-item[data-theme="green"]').classList.contains('active')`,
+  )
+  await evalJs(`document.querySelector('.ppv-theme-item[data-theme="light"]').click()`)
+  await sleep(250)
+  const backToLight = await evalJs(`document.querySelector('.ppv-root').dataset.theme`)
+  console.log(
+    `THEME GREEN/LIGHT: green=${greenCheck} menuSync=${menuSync} back=${backToLight} stored=${darkCheck.stored}`,
+  )
+
   // 缩略图画布渲染
   const thumbCanvases = await waitFor(
     () =>
