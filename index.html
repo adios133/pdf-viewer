@@ -48,22 +48,6 @@
         margin: 0 8px 0 0;
         white-space: nowrap;
       }
-      .demo-bar select {
-        height: 32px;
-        padding: 0 8px;
-        border-radius: 8px;
-        border: 1px solid #dadce0;
-        background: #ffffff;
-        color: #202124;
-        outline: none;
-        font: inherit;
-      }
-      .demo-bar select:hover {
-        border-color: #bdc1c6;
-      }
-      .demo-bar select:focus {
-        border-color: #1a73e8;
-      }
       .demo-bar button {
         height: 32px;
         padding: 0 16px;
@@ -93,12 +77,7 @@
   <body>
     <div class="demo-bar">
       <h1>PdfPreview</h1>
-      <select id="urls">
-        <option value="/sample.pdf" selected>本地示例 sample.pdf（6 页）</option>
-        <option value="/large.pdf">本地大文件 large.pdf（500 页）</option>
-        <option value="/pdfh5/git.pdf">远程：git.pdf (gjtool.cn)</option>
-        <option value="/api/测试.pdf">远程：测试.pdf (neocities)</option>
-      </select>
+      <div id="urlSlot"></div>
       <button id="openBtn">打开本地 PDF</button>
       <input id="fileInput" type="file" accept="application/pdf,.pdf" />
       <span class="hint" id="hint"></span>

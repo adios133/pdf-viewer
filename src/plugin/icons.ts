@@ -1,74 +1,84 @@
 /**
- * 工具栏图标：自绘 Material 线条风格（24×24，stroke 随 currentColor），
- * 与标绘面板图标风格统一，随主题色变化。
+ * 工具栏图标：Lucide 图标库（https://lucide.dev，ISC License），
+ * 24×24 线性风格，内联 SVG 随 currentColor 继承主题色。
  */
 
 const svg = (inner: string): string =>
   `<svg class="ppv-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`
 
 export const icons = {
-  /** 打开文件 */
+  /** folder-open */
   openFile: svg(
-    `<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>`,
+    `<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" />`,
   ),
-  /** 缩略图侧栏 */
+  /** layout-grid */
   viewThumbnail: svg(
-    `<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>`,
+    `<rect width="7" height="7" x="3" y="3" rx="1" /> <rect width="7" height="7" x="14" y="3" rx="1" /> <rect width="7" height="7" x="14" y="14" rx="1" /> <rect width="7" height="7" x="3" y="14" rx="1" />`,
   ),
-  /** 第一页 */
-  firstPage: svg(`<path d="M7 6v12"/><path d="m15 6-7 6 7 6"/>`),
-  /** 上一页 */
-  pageUp: svg(`<path d="m15 6-6 6 6 6"/>`),
-  /** 下一页 */
-  pageDown: svg(`<path d="m9 6 6 6-6 6"/>`),
-  /** 最后一页 */
-  lastPage: svg(`<path d="M17 6v12"/><path d="m9 6 7 6-7 6"/>`),
-  /** 缩小 */
-  zoomOut: svg(`<circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/><path d="M8 11h6"/>`),
-  /** 放大 */
+  /** chevrons-left */
+  firstPage: svg(`<path d="m11 17-5-5 5-5" /> <path d="m18 17-5-5 5-5" />`),
+  /** chevron-left */
+  pageUp: svg(`<path d="m15 18-6-6 6-6" />`),
+  /** chevron-right */
+  pageDown: svg(`<path d="m9 18 6-6-6-6" />`),
+  /** chevrons-right */
+  lastPage: svg(`<path d="m6 17 5-5-5-5" /> <path d="m13 17 5-5-5-5" />`),
+  /** zoom-out */
+  zoomOut: svg(
+    `<circle cx="11" cy="11" r="8" /> <line x1="21" x2="16.65" y1="21" y2="16.65" /> <line x1="8" x2="14" y1="11" y2="11" />`,
+  ),
+  /** zoom-in */
   zoomIn: svg(
-    `<circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/><path d="M11 8v6M8 11h6"/>`,
+    `<circle cx="11" cy="11" r="8" /> <line x1="21" x2="16.65" y1="21" y2="16.65" /> <line x1="11" x2="11" y1="8" y2="14" /> <line x1="8" x2="14" y1="11" y2="11" />`,
   ),
-  /** 适合页宽 */
-  fitWidth: svg(`<path d="M3 12h18"/><path d="m7 8-4 4 4 4"/><path d="m17 8 4 4-4 4"/>`),
-  /** 适合页面 */
+  /** arrow-left-right */
+  fitWidth: svg(
+    `<path d="M8 3 4 7l4 4" /> <path d="M4 7h16" /> <path d="m16 21 4-4-4-4" /> <path d="M20 17H4" />`,
+  ),
+  /** scan */
   fitPage: svg(
-    `<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>`,
+    `<path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" />`,
   ),
-  /** 顺时针旋转 */
-  rotateCw: svg(`<path d="M21 4v6h-6"/><path d="M19.5 15a9 9 0 1 1-2.1-9.4L21 10"/>`),
-  /** 逆时针旋转 */
-  rotateCcw: svg(`<path d="M3 4v6h6"/><path d="M4.5 15a9 9 0 1 0 2.1-9.4L3 10"/>`),
-  /** 查找 */
-  search: svg(`<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>`),
-  /** 查找选项（设置） */
-  settings: svg(
-    `<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>`,
+  /** rotate-cw */
+  rotateCw: svg(
+    `<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" />`,
   ),
-  /** 上一个匹配 */
-  findPrev: svg(`<path d="m15 18-6-6 6-6"/>`),
-  /** 下一个匹配 */
-  findNext: svg(`<path d="m9 18 6-6-6-6"/>`),
-  /** 打印 */
+  /** rotate-ccw */
+  rotateCcw: svg(
+    `<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" />`,
+  ),
+  /** search */
+  search: svg(`<path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" />`),
+  /** chevron-left */
+  findPrev: svg(`<path d="m15 18-6-6 6-6" />`),
+  /** chevron-right */
+  findNext: svg(`<path d="m9 18 6-6-6-6" />`),
+  /** printer */
   print: svg(
-    `<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>`,
+    `<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /> <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /> <rect x="6" y="14" width="12" height="8" rx="1" />`,
   ),
-  /** 下载 */
+  /** download */
   download: svg(
-    `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>`,
+    `<path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" />`,
   ),
-  /** 全屏演示 */
+  /** maximize */
   presentation: svg(
-    `<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/>`,
+    `<path d="M8 3H5a2 2 0 0 0-2 2v3" /> <path d="M21 8V5a2 2 0 0 0-2-2h-3" /> <path d="M3 16v3a2 2 0 0 0 2 2h3" /> <path d="M16 21h3a2 2 0 0 0 2-2v-3" />`,
   ),
-  /** 标绘 */
-  editorInk: svg(`<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>`),
-  /** 主题切换（调色板） */
+  /** pencil */
+  editorInk: svg(
+    `<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" />`,
+  ),
+  /** palette */
   theme: svg(
-    `<circle cx="12" cy="12" r="9"/><circle cx="8.2" cy="8.6" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.6" cy="9.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15.2" r="1.2" fill="currentColor" stroke="none"/>`,
+    `<path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /> <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /> <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /> <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /> <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />`,
   ),
-  /** 关闭 */
-  close: svg(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`),
+  /** sliders-horizontal */
+  settings: svg(
+    `<path d="M10 5H3" /> <path d="M12 19H3" /> <path d="M14 3v4" /> <path d="M16 17v4" /> <path d="M21 12h-9" /> <path d="M21 19h-5" /> <path d="M21 5h-7" /> <path d="M8 10v4" /> <path d="M8 12H3" />`,
+  ),
+  /** x */
+  close: svg(`<path d="M18 6 6 18" /> <path d="m6 6 12 12" />`),
 } as const
 
 export type IconName = keyof typeof icons

@@ -2,12 +2,20 @@
  * 演示页面：挂载 PdfPreview 插件，支持切换远程/本地 PDF。
  */
 import { PdfPreview } from "./main"
+import { PpvSelect } from "./plugin/ui/Select"
 
 const mount = document.querySelector<HTMLElement>("#app")!
-const urls = document.querySelector<HTMLSelectElement>("#urls")!
+const urlSlot = document.querySelector<HTMLElement>("#urlSlot")!
 const hint = document.querySelector<HTMLElement>("#hint")!
 const openBtn = document.querySelector<HTMLButtonElement>("#openBtn")!
 const fileInput = document.querySelector<HTMLInputElement>("#fileInput")!
+
+const DEMO_DOCS = [
+  { value: "/sample.pdf", label: "本地示例 sample.pdf（6 页）" },
+  { value: "/large.pdf", label: "本地大文件 large.pdf（500 页）" },
+  { value: "/pdfh5/git.pdf", label: "远程：git.pdf (gjtool.cn)" },
+  { value: "/api/测试.pdf", label: "远程：测试.pdf (neocities)" },
+]
 
 let preview: PdfPreview | null = null
 
@@ -35,9 +43,15 @@ async function mountPreview(url?: string) {
   await preview.load()
 }
 
-urls.addEventListener("change", () => {
-  void mountPreview(urls.value).catch(() => {})
+const urlSelect = new PpvSelect({
+  options: DEMO_DOCS,
+  value: DEMO_DOCS[0].value,
+  title: "选择文档",
+  onChange: (value) => {
+    void mountPreview(value).catch(() => {})
+  },
 })
+urlSlot.appendChild(urlSelect.el)
 
 openBtn.addEventListener("click", () => fileInput.click())
 
@@ -60,4 +74,4 @@ fileInput.addEventListener("change", () => {
   void preview.load().catch(() => {})
 })
 
-void mountPreview(urls.value).catch(() => {})
+void mountPreview(DEMO_DOCS[0].value).catch(() => {})

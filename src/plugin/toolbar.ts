@@ -2,6 +2,9 @@ import { icons } from "./icons"
 import type { IconName } from "./icons"
 import { THEMES } from "./types"
 import type { Theme } from "./types"
+import { PpvSelect } from "./ui/Select"
+import { PpvSwitch } from "./ui/Switch"
+import { ColorPicker } from "./ui/ColorPicker"
 
 /** 工具栏动作：由 PdfPreview 统一处理。 */
 export type ToolbarAction =
@@ -96,12 +99,12 @@ export class Toolbar {
     btnFullscreen: null as HTMLButtonElement | null,
     pageInput: null as HTMLInputElement | null,
     totalLabel: null as HTMLElement | null,
-    zoomSelect: null as HTMLSelectElement | null,
+    zoomSelect: null as PpvSelect | null,
     zoomLabel: null as HTMLElement | null,
     title: null as HTMLElement | null,
   }
 
-  constructor(handler: ToolbarActionHandler) {
+  constructor(handler: ToolbarActionHandler, onAccent?: (color: string) => void) {
     this.handler = handler
     this.el = document.createElement("div")
     this.el.className = "ppv-toolbar"
@@ -170,25 +173,20 @@ export class Toolbar {
     // 缩放
     const zoom = g(this.el)
     const btnZoomOut = button("zoomOut", "缩小 (Ctrl+-)", "zoom-out", handler)
-    const zoomSelect = document.createElement("select")
-    zoomSelect.className = "ppv-select ppv-zoom-select"
-    zoomSelect.title = "缩放"
-    for (const p of ZOOM_PRESETS) {
-      const opt = document.createElement("option")
-      opt.value = p.value
-      opt.textContent = p.label
-      zoomSelect.appendChild(opt)
-    }
-    zoomSelect.addEventListener("change", () =>
-      handler({ action: "zoom-select", payload: zoomSelect.value }),
-    )
+    const zoomSelect = new PpvSelect({
+      options: ZOOM_PRESETS.map((p) => ({ value: p.value, label: p.label })),
+      value: "auto",
+      title: "缩放",
+      className: "ppv-zoom-select",
+      onChange: (value) => handler({ action: "zoom-select", payload: value }),
+    })
     const zoomLabel = document.createElement("span")
     zoomLabel.className = "ppv-zoom-label"
     zoomLabel.textContent = ""
     const btnZoomIn = button("zoomIn", "放大 (Ctrl++)", "zoom-in", handler)
     const btnFitWidth = button("fitWidth", "适合页宽", "fit-width", handler)
     const btnFitPage = button("fitPage", "适合页面", "fit-page", handler)
-    zoom.append(btnZoomOut, zoomSelect, zoomLabel, btnZoomIn, btnFitWidth, btnFitPage)
+    zoom.append(btnZoomOut, zoomSelect.el, zoomLabel, btnZoomIn, btnFitWidth, btnFitPage)
     this.refs.btnZoomOut = btnZoomOut
     this.refs.btnZoomIn = btnZoomIn
     this.refs.btnFitWidth = btnFitWidth
@@ -229,7 +227,7 @@ export class Toolbar {
     this.refs.btnDownload = btnDownload
     this.refs.btnFullscreen = btnFullscreen
     this.refs.btnTheme = btnTheme
-    this.themeMenu = new ThemeMenu(handler, btnTheme)
+    this.themeMenu = new ThemeMenu(handler, btnTheme, onAccent)
   }
 
   /** 主题切换菜单（挂载到插件根节点，由 PdfPreview 负责 append）。 */
@@ -263,7 +261,7 @@ export class Toolbar {
       if (el) el.disabled = !enabled
     }
     if (r.pageInput) r.pageInput.disabled = !enabled
-    if (r.zoomSelect) r.zoomSelect.disabled = !enabled
+    if (r.zoomSelect) r.zoomSelect.setEnabled(enabled)
   }
 
   setPage(current: number, total: number): void {
@@ -281,41 +279,17 @@ export class Toolbar {
   setZoom(scale: number, presetValue: string | null): void {
     const select = this.refs.zoomSelect
     if (select) {
-      let matched = false
-      for (const opt of Array.from(select.options)) {
-        if (presetValue && opt.value === presetValue) {
-          select.value = opt.value
-          matched = true
-          break
-        }
-      }
-      if (!matched) {
-        // 匹配百分比档位（如 scale=1.5 → "1.5"）
+      // 优先预设值（auto / page-fit / page-width / page-actual）
+      if (presetValue && ZOOM_PRESETS.some((p) => p.value === presetValue)) {
+        select.setValue(presetValue)
+      } else {
+        // 匹配百分比档位（如 scale=1.5 → "1.5"），否则显示自定义百分比
         const pctScale = Math.round(scale * 100) / 100
-        for (const opt of Array.from(select.options)) {
-          if (Number(opt.value) === pctScale) {
-            select.value = opt.value
-            matched = true
-            break
-          }
-        }
-        if (!matched) {
-          select.value = ""
-          // 自定义缩放：附加一个“自定义”选项方便回显
-          const customValue = `${pctScale}`
-          const existing = Array.from(select.options).find((o) => o.value === "__custom__")
-          if (existing) {
-            existing.textContent = `${Math.round(scale * 100)}%`
-            existing.value = customValue
-            select.value = customValue
-          } else {
-            const opt = document.createElement("option")
-            opt.value = customValue
-            opt.textContent = `${Math.round(scale * 100)}%`
-            select.appendChild(opt)
-            select.value = customValue
-          }
-        }
+        const exact = ZOOM_PRESETS.find(
+          (p) => !isNaN(Number(p.value)) && Number(p.value) === pctScale,
+        )
+        if (exact) select.setValue(exact.value)
+        else select.setLabel(`${Math.round(scale * 100)}%`)
       }
     }
     if (this.refs.zoomLabel) this.refs.zoomLabel.textContent = `${Math.round(scale * 100)}%`
@@ -351,8 +325,8 @@ export class FindBar {
   private readonly input: HTMLInputElement
   private readonly countEl: HTMLElement
   private readonly wrapEl: HTMLElement
-  private readonly caseChk: HTMLInputElement
-  private readonly highlightChk: HTMLInputElement
+  private readonly caseSwitch: PpvSwitch
+  private readonly highlightSwitch: PpvSwitch
   private readonly btnPrev: HTMLButtonElement
   private readonly btnNext: HTMLButtonElement
   private readonly settingsBtn: HTMLButtonElement
@@ -447,31 +421,14 @@ export class FindBar {
     btnClose.innerHTML = icons.close
     btnClose.addEventListener("click", () => this.handler({ action: "find-close" }))
 
-    // ---- 设置区：区分大小写 / 高亮全部 ----
+    // ---- 设置区：区分大小写 / 高亮全部（自实现开关） ----
     const settings = document.createElement("div")
     settings.className = "ppv-find-settings"
     this.settingsEl = settings
 
-    const caseChk = document.createElement("label")
-    caseChk.className = "ppv-find-option"
-    const caseInput = document.createElement("input")
-    caseInput.type = "checkbox"
-    caseChk.appendChild(caseInput)
-    caseChk.appendChild(document.createTextNode("区分大小写"))
-    caseInput.addEventListener("change", () => this.emitFind())
-    this.caseChk = caseInput
-
-    const highlightChk = document.createElement("label")
-    highlightChk.className = "ppv-find-option"
-    const highlightInput = document.createElement("input")
-    highlightInput.type = "checkbox"
-    highlightInput.checked = true
-    highlightChk.appendChild(highlightInput)
-    highlightChk.appendChild(document.createTextNode("高亮全部"))
-    highlightInput.addEventListener("change", () => this.emitFind())
-    this.highlightChk = highlightInput
-
-    settings.append(caseChk, highlightChk)
+    this.caseSwitch = new PpvSwitch("区分大小写", false, () => this.emitFind())
+    this.highlightSwitch = new PpvSwitch("高亮全部", true, () => this.emitFind())
+    settings.append(this.caseSwitch.el, this.highlightSwitch.el)
     this.el.append(wrap, btnPrev, btnNext, btnSettings, btnClose, settings)
   }
 
@@ -494,8 +451,8 @@ export class FindBar {
       action: "find-input",
       payload: {
         query,
-        caseSensitive: this.caseChk.checked,
-        highlightAll: this.highlightChk.checked,
+        caseSensitive: this.caseSwitch.checked,
+        highlightAll: this.highlightSwitch.checked,
       },
     })
   }
@@ -625,6 +582,8 @@ export class ThemeMenu {
   private readonly handler: ToolbarActionHandler
   private readonly anchor: HTMLElement
   private readonly items = new Map<Theme, HTMLButtonElement>()
+  private accentPicker!: ColorPicker
+  private onAccent?: (color: string) => void
   private open = false
   private readonly onOutside = (e: PointerEvent) => {
     if (!this.open) return
@@ -634,7 +593,11 @@ export class ThemeMenu {
     }
   }
 
-  constructor(handler: ToolbarActionHandler, anchor: HTMLElement) {
+  constructor(
+    handler: ToolbarActionHandler,
+    anchor: HTMLElement,
+    onAccent?: (color: string) => void,
+  ) {
     this.handler = handler
     this.anchor = anchor
     this.el = document.createElement("div")
@@ -664,6 +627,20 @@ export class ThemeMenu {
       this.items.set(theme.id, item)
     }
 
+    // 自定义强调色
+    this.onAccent = onAccent
+    const customRow = document.createElement("div")
+    customRow.className = "ppv-theme-custom"
+    const customLabel = document.createElement("span")
+    customLabel.textContent = "自定义强调色"
+    this.accentPicker = new ColorPicker({
+      value: "#0078d4",
+      title: "选择强调色",
+      onChange: (color) => onAccent?.(color),
+    })
+    customRow.append(customLabel, this.accentPicker.el)
+    this.el.appendChild(customRow)
+
     document.addEventListener("pointerdown", this.onOutside)
   }
 
@@ -691,6 +668,11 @@ export class ThemeMenu {
       const check = item.querySelector<HTMLElement>(".ppv-theme-check")
       if (check) check.style.visibility = active ? "visible" : "hidden"
     }
+  }
+
+  /** 同步自定义强调色到色块按钮（null 表示使用主题默认色）。 */
+  setAccent(color: string | null): void {
+    if (this.accentPicker) this.accentPicker.setColor(color ?? "#0078d4")
   }
 
   destroy(): void {

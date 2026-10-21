@@ -45,6 +45,7 @@ const DEFAULT_CMAP_URL = `${import.meta.env.BASE_URL || "/"}pdfjs/cmaps/`
 const DEFAULT_STD_FONT_URL = `${import.meta.env.BASE_URL || "/"}pdfjs/standard_fonts/`
 const IDLE_CLEANUP_DELAY = 5000
 const THEME_STORAGE_KEY = "pdf-preview:theme"
+const ACCENT_STORAGE_KEY = "pdf-preview:accent"
 
 type PDFViewerInstance = InstanceType<ViewerModule["PDFViewer"]>
 type PDFLinkServiceInstance = InstanceType<ViewerModule["PDFLinkService"]>
@@ -93,6 +94,7 @@ export class PdfPreview {
   private scale = 1
   private rotation = 0
   private theme: Theme = "light"
+  private accent: string | null = null
   private lastActivity = performance.now()
   private cleanupTimer: number | null = null
   private findState = 0
@@ -108,7 +110,10 @@ export class PdfPreview {
     this.root = document.createElement("div")
     this.root.className = "ppv-root"
 
-    this.toolbar = new Toolbar((e) => this.onToolbarAction(e))
+    this.toolbar = new Toolbar(
+      (e) => this.onToolbarAction(e),
+      (color) => this.setAccent(color),
+    )
     this.findBar = new FindBar((e) => this.onToolbarAction(e))
     this.statusBar = new StatusBar()
     if (options.showToolbar === false) this.toolbar.el.style.display = "none"
@@ -117,6 +122,7 @@ export class PdfPreview {
     // ---- 标绘层 ----
     this.markManager = new MarkLayerManager({
       getViewer: () => this.viewer,
+      getRoot: () => this.root,
       onMarksChange: (marks) => {
         this.syncMarkPanelState()
         this.emit("markschange", { marks })
@@ -184,6 +190,7 @@ export class PdfPreview {
 
     this.attach(options.container)
 
+    this.accent = this.resolveInitialAccent()
     this.applyTheme(this.resolveInitialTheme(), false)
 
     this.toolbar.setEnabled(false)
@@ -437,6 +444,29 @@ export class PdfPreview {
     return this.theme
   }
 
+  /** 自定义强调色（覆盖当前主题主色），传 null/空串恢复主题默认。 */
+  setAccent(color: string | null): void {
+    this.accent = normalizeHex(color)
+    this.applyAccent()
+    if (this.options.persistTheme !== false) {
+      try {
+        if (this.accent) window.localStorage.setItem(ACCENT_STORAGE_KEY, this.accent)
+        else window.localStorage.removeItem(ACCENT_STORAGE_KEY)
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  getAccent(): string | null {
+    return this.accent
+  }
+
+  /** 恢复主题默认主色。 */
+  resetAccent(): void {
+    this.setAccent(null)
+  }
+
   /** 打开/关闭主题切换菜单。 */
   toggleThemeMenu(open?: boolean): void {
     if (open === undefined) {
@@ -452,6 +482,8 @@ export class PdfPreview {
     this.theme = theme
     this.root.dataset.theme = theme
     this.toolbar.setTheme(theme)
+    this.toolbar.themeMenu.setAccent(this.accent)
+    this.applyAccent()
     if (this.options.persistTheme !== false) {
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, theme)
@@ -477,6 +509,42 @@ export class PdfPreview {
       }
     }
     return "light"
+  }
+
+  private resolveInitialAccent(): string | null {
+    if (this.options.persistTheme !== false) {
+      try {
+        const stored = window.localStorage.getItem(ACCENT_STORAGE_KEY)
+        if (stored) return normalizeHex(stored)
+      } catch {
+        /* ignore */
+      }
+    }
+    return null
+  }
+
+  /** 应用自定义强调色：覆盖主色及派生色变量（无自定义时移除内联覆盖）。 */
+  private applyAccent(): void {
+    const style = this.root.style
+    const props = [
+      "--ppv-primary",
+      "--ppv-primary-hover",
+      "--ppv-primary-active",
+      "--ppv-selected-bg",
+      "--ppv-selected-hover",
+    ]
+    if (!this.accent) {
+      for (const prop of props) style.removeProperty(prop)
+      return
+    }
+    const rgb = hexToRgb(this.accent)
+    if (!rgb) return
+    const { r, g, b } = rgb
+    style.setProperty("--ppv-primary", this.accent)
+    style.setProperty("--ppv-primary-hover", shade(this.accent, -0.12))
+    style.setProperty("--ppv-primary-active", shade(this.accent, -0.24))
+    style.setProperty("--ppv-selected-bg", `rgb(${r} ${g} ${b} / 0.12)`)
+    style.setProperty("--ppv-selected-hover", `rgb(${r} ${g} ${b} / 0.2)`)
   }
 
   async print(): Promise<void> {
@@ -1269,4 +1337,35 @@ export async function createPdfPreview(options: PdfPreviewOptions): Promise<PdfP
     // load() 失败时预览自身已展示错误浮层，不再向上抛
     return preview
   }
+}
+
+// ---- 颜色工具 ----
+
+/** 归一化 HEX：#rgb / #rrggbb / 无 # 前缀 → #rrggbb；非法返回 null。 */
+function normalizeHex(raw: string | null): string | null {
+  if (!raw) return null
+  let hex = raw.trim().replace(/^#/, "")
+  if (/^[0-9a-f]{3}$/i.test(hex)) {
+    hex = hex
+      .split("")
+      .map((c) => c + c)
+      .join("")
+  }
+  if (!/^[0-9a-f]{6}$/i.test(hex)) return null
+  return `#${hex.toLowerCase()}`
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return null
+  const n = parseInt(m[1], 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
+
+/** 明暗调整：amount 为正变亮、负变暗（0.12 = 12%）。 */
+function shade(hex: string, amount: number): string {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return hex
+  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v * (1 + amount))))
+  return `#${[c(rgb.r), c(rgb.g), c(rgb.b)].map((v) => v.toString(16).padStart(2, "0")).join("")}`
 }

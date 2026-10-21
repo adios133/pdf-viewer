@@ -128,7 +128,14 @@ try {
     )
     const expectName = SELECT_VALUE.split("/").pop()
     await evalJs(
-      `(() => { const s = document.querySelector('#urls'); s.value = ${JSON.stringify(SELECT_VALUE)}; s.dispatchEvent(new Event('change', {bubbles: true})) })()`,
+      `(() => {
+        const slot = document.querySelector('#urlSlot');
+        slot.querySelector('.ppv-select-btn').click();
+        const item = slot.querySelector('.ppv-select-item[data-value=' + JSON.stringify(${JSON.stringify(SELECT_VALUE)}) + ']');
+        if (!item) return 'option-missing';
+        item.click();
+        return 'selected';
+      })()`,
     )
     const switched = await waitFor(
       () =>
@@ -204,13 +211,18 @@ try {
   const pageAfterNext = await evalJs(`document.querySelector('.ppv-page-input')?.value`)
   console.log("PAGE AFTER NEXT:", pageAfterNext)
 
-  // 交互测试：缩放（下拉值为十进制倍率，如 1.5 = 150%）
-  await evalJs(
-    `(() => { const s = document.querySelector('.ppv-zoom-select'); s.value = '1.5'; s.dispatchEvent(new Event('change', {bubbles: true})) })()`,
-  )
+  // 交互测试：缩放（自定义下拉：点开 → 选 150%）
+  await evalJs(`document.querySelector('.ppv-zoom-select .ppv-select-btn').click()`)
+  await sleep(150)
+  const zoomOption = await evalJs(`(() => {
+    const item = document.querySelector('.ppv-zoom-select .ppv-select-item[data-value="1.5"]');
+    if (!item) return 'missing';
+    item.click();
+    return 'clicked';
+  })()`)
   await sleep(1200)
   const zoomAfter = await evalJs(`document.querySelector('.ppv-zoom-label')?.textContent`)
-  console.log("ZOOM AFTER SET 150%:", zoomAfter)
+  console.log("ZOOM AFTER SET 150%:", zoomAfter, "| option:", zoomOption)
 
   // 查找测试（若指定关键词）
   if (FIND_TERM) {
@@ -415,7 +427,74 @@ try {
   console.log(
     `MARKS JSON: len=${json.length} badJson=${importBad} import=${importOk} afterImport=${marksAfterImport}`,
   )
-  // 5. 关闭面板
+  // 5. 文本标注：自绘弹窗（替代 window.prompt）
+  //    先重置页面旋转为 0，便于验证文字方向（旋转测试在前面做过 90°）
+  await evalJs(`window.__ppvPreview.setRotation(0)`)
+  await sleep(800)
+  await evalJs(`document.querySelector('.ppv-mark-panel button[data-tool="text"]').click()`)
+  await sleep(200)
+  const textMark = await evalJs(`(() => {
+    const c = document.querySelector('.ppv-mark-canvas');
+    const r = c.getBoundingClientRect();
+    c.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, pointerId: 6, isPrimary: true, pointerType: 'mouse',
+      clientX: r.left + 300, clientY: r.top + 300,
+    }));
+    const popup = document.querySelector('.ppv-text-input');
+    const field = document.querySelector('.ppv-text-input-field');
+    if (!popup || !field) return JSON.stringify({ popup: false });
+    field.value = '笔记标注';
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    [...popup.querySelectorAll('.ppv-overlay-btn')]
+      .find((b) => b.textContent === '确定')
+      .click();
+    const marks = window.__ppvPreview.getMarks();
+    const m = marks[marks.length - 1] || {};
+    return JSON.stringify({ popup: true, type: m.type, text: m.text });
+  })()`)
+  // 5.5 文字方向验证：文字应正立出现在点击点（300,300）下方，而非上方（Y 翻转）
+  const textDirection = await evalJs(`(() => {
+    const c = document.querySelector('.ppv-mark-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let minY = Infinity, maxY = -Infinity, count = 0;
+    for (let y = 250; y <= 420; y++) {
+      for (let x = 280; x <= 520; x++) {
+        if (d[(y * c.width + x) * 4 + 3] > 40) {
+          count++;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    return JSON.stringify({
+      count,
+      minY,
+      maxY,
+      // 文字垂直中心应落在点击点（y=300）附近：上下各半
+      centerY: Math.round((minY + maxY) / 2),
+      upright: count > 10 && Math.abs((minY + maxY) / 2 - 300) <= 6,
+    });
+  })()`)
+  // 6. 文本弹窗 Esc 取消
+  const textCancel = await evalJs(`(() => {
+    const c = document.querySelector('.ppv-mark-canvas');
+    const r = c.getBoundingClientRect();
+    c.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, pointerId: 7, isPrimary: true, pointerType: 'mouse',
+      clientX: r.left + 320, clientY: r.top + 320,
+    }));
+    const field = document.querySelector('.ppv-text-input-field');
+    if (!field) return JSON.stringify({ popup: false });
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    return JSON.stringify({ closed: !document.querySelector('.ppv-text-input'), marks: window.__ppvPreview.getMarks().length });
+  })()`)
+  await evalJs(`window.__ppvPreview.clearMarks()`)
+  await evalJs(`document.querySelector('.ppv-mark-panel button[data-tool="pen"]').click()`)
+  await sleep(200)
+  console.log(
+    `TEXT MARK: ${textMark} | TEXT DIRECTION: ${textDirection} | TEXT CANCEL: ${textCancel}`,
+  )
+  // 7. 关闭面板
   await evalJs(`document.querySelector('button[title="标绘"]').click()`)
   await sleep(200)
   const panelClosed = await evalJs(`document.querySelector('.ppv-mark-panel').hidden`)

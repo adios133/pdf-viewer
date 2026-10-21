@@ -6,14 +6,14 @@
 
 /* ---------------- 浅色（默认） ---------------- */
 .ppv-root {
-  --ppv-primary: #1a73e8;
-  --ppv-primary-hover: #1765cc;
-  --ppv-primary-active: #1557b0;
+  --ppv-primary: #0078d4;
+  --ppv-primary-hover: #106ebe;
+  --ppv-primary-active: #005a9e;
   --ppv-on-primary: #ffffff;
   --ppv-selected-bg: #e8f0fe;
   --ppv-selected-hover: #dbe7fd;
   --ppv-surface: #ffffff;
-  --ppv-bg-app: #e8eaed;
+  --ppv-bg-app: #525659;
   --ppv-bg-input: #f1f3f4;
   --ppv-bg-input-hover: #e8eaed;
   --ppv-hover: #f1f3f4;
@@ -55,14 +55,14 @@
 
 /* ---------------- 深色 ---------------- */
 .ppv-root[data-theme="dark"] {
-  --ppv-primary: #8ab4f8;
-  --ppv-primary-hover: #aecbfa;
-  --ppv-primary-active: #93b9f8;
+  --ppv-primary: #60cdff;
+  --ppv-primary-hover: #79d6ff;
+  --ppv-primary-active: #4ac2ff;
   --ppv-on-primary: #202124;
   --ppv-selected-bg: rgb(138 180 248 / 16%);
   --ppv-selected-hover: rgb(138 180 248 / 28%);
   --ppv-surface: #202124;
-  --ppv-bg-app: #38383d;
+  --ppv-bg-app: #2b2d31;
   --ppv-bg-input: #3c4043;
   --ppv-bg-input-hover: #45494d;
   --ppv-hover: #3c4043;
@@ -162,11 +162,17 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 48px;
-  padding: 0 8px;
+  height: 50px;
+  width: calc(100% - 20px);
+  max-width: 1120px;
+  margin: 10px auto 0;
+  padding: 0 10px;
   background: var(--ppv-surface);
-  border-bottom: 1px solid var(--ppv-border);
-  box-shadow: var(--ppv-shadow-1);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 10px rgb(0 0 0 / 26%),
+    0 1px 3px rgb(0 0 0 / 20%);
   z-index: 20;
 }
 .ppv-group {
@@ -177,15 +183,15 @@
   padding: 0 6px;
 }
 .ppv-group + .ppv-group {
-  border-left: 1px solid var(--ppv-border);
+  margin-left: 2px;
 }
 
 .ppv-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -193,10 +199,13 @@
   color: var(--ppv-text-primary);
   cursor: pointer;
   flex: 0 0 auto;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
 }
 .ppv-btn:hover:not(:disabled) {
   background: var(--ppv-hover);
+  transform: scale(1.05);
 }
 .ppv-btn:active:not(:disabled) {
   background: var(--ppv-hover-strong);
@@ -256,30 +265,130 @@
   color: var(--ppv-text-tertiary);
 }
 
+/* ---------------- 自实现下拉选择器 ---------------- */
 .ppv-select {
+  position: relative;
+  flex: 0 0 auto;
+}
+.ppv-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 32px;
-  max-width: 160px;
-  padding: 0 8px;
+  padding: 0 8px 0 12px;
   color: var(--ppv-text-primary);
   background: var(--ppv-surface);
   border: 1px solid var(--ppv-border);
   border-radius: 8px;
   font: inherit;
-  outline: none;
+  font-size: 13px;
   cursor: pointer;
+  outline: none;
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
 }
-.ppv-select:hover {
+.ppv-select-btn:hover {
   border-color: #bdc1c6;
 }
-.ppv-select:focus {
+.ppv-select.open .ppv-select-btn,
+.ppv-select-btn:focus-visible {
   border-color: var(--ppv-primary);
   box-shadow: 0 0 0 1px var(--ppv-primary) inset;
 }
+.ppv-select-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ppv-select-label {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ppv-select-chevron {
+  display: inline-flex;
+  color: var(--ppv-text-tertiary);
+  transition: transform 0.18s ease;
+}
+.ppv-select-chevron svg {
+  width: 15px;
+  height: 15px;
+}
+.ppv-select.open .ppv-select-chevron {
+  transform: rotate(180deg);
+}
+.ppv-select-icon {
+  display: inline-flex;
+  color: var(--ppv-text-secondary);
+}
+.ppv-select-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.ppv-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 100%;
+  max-height: 320px;
+  overflow: auto;
+  padding: 6px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
+}
+.ppv-select.open .ppv-select-menu {
+  display: flex;
+  animation: ppv-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ppv-select-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ppv-text-primary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.ppv-select-item:hover {
+  background: var(--ppv-hover);
+}
+.ppv-select-item.active {
+  background: var(--ppv-selected-bg);
+  color: var(--ppv-primary);
+}
+.ppv-select-check {
+  margin-left: auto;
+  display: inline-flex;
+  visibility: hidden;
+}
+.ppv-select-item.active .ppv-select-check {
+  visibility: visible;
+}
+.ppv-select-check svg {
+  width: 16px;
+  height: 16px;
+}
 .ppv-zoom-select {
-  min-width: 96px;
+  min-width: 104px;
+}
+.ppv-zoom-select .ppv-select-btn {
+  width: 100%;
+  justify-content: space-between;
 }
 .ppv-zoom-label {
   display: inline-block;
@@ -331,9 +440,11 @@
 /* 页面卡片化：去掉 pdf.js 的透明描边，改用投影 */
 .ppv-root .pdfViewer .page {
   border: 0;
-  margin: 16px auto;
+  margin: 14px auto;
   border-radius: 2px;
-  box-shadow: var(--ppv-shadow-2);
+  box-shadow:
+    0 1px 4px rgb(0 0 0 / 40%),
+    0 3px 14px rgb(0 0 0 / 22%);
   background-color: #ffffff;
 }
 .ppv-root .pdfViewer .dummyPage {
@@ -373,8 +484,14 @@
   width: 180px;
   display: none;
   flex-direction: column;
+  margin: 10px;
   background: var(--ppv-surface);
-  border-right: 1px solid var(--ppv-border);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 10px rgb(0 0 0 / 26%),
+    0 1px 3px rgb(0 0 0 / 20%);
+  overflow: hidden;
   z-index: 10;
 }
 .ppv-sidebar.open {
@@ -404,8 +521,10 @@
   margin: 0 auto 12px;
   background: #ffffff;
   border: 1px solid #d2d4d6;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgb(60 64 67 / 25%);
+  border-radius: 8px;
+  box-shadow:
+    0 1px 3px rgb(60 64 67 / 28%),
+    0 2px 8px rgb(60 64 67 / 10%);
   cursor: pointer;
   overflow: hidden;
   text-align: center;
@@ -449,7 +568,7 @@
 /* ---------------- 查找栏 ---------------- */
 .ppv-findbar {
   position: absolute;
-  top: 56px;
+  top: 68px;
   right: 8px;
   z-index: 30;
   display: none;
@@ -536,42 +655,25 @@
   color: var(--ppv-danger);
 }
 
-/* 设置弹出区：区分大小写 / 高亮全部 */
+/* 设置弹出区：区分大小写 / 高亮全部（自实现开关） */
 .ppv-find-settings {
   position: absolute;
   top: calc(100% + 6px);
   right: 8px;
+  z-index: 31;
   display: none;
   flex-direction: column;
   gap: 2px;
-  min-width: 150px;
+  min-width: 168px;
   padding: 6px;
   background: var(--ppv-surface);
   border: 1px solid var(--ppv-border);
-  border-radius: 10px;
-  box-shadow: var(--ppv-shadow-2);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
 }
 .ppv-find-settings.open {
   display: flex;
-}
-.ppv-find-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  color: var(--ppv-text-primary);
-  white-space: nowrap;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background-color 0.15s ease;
-}
-.ppv-find-option:hover {
-  background: var(--ppv-hover);
-}
-.ppv-find-option input {
-  accent-color: var(--ppv-primary);
-  cursor: pointer;
+  animation: ppv-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* ---------------- 状态栏 ---------------- */
@@ -785,20 +887,23 @@
 .ppv-mark-panel {
   position: absolute;
   left: 8px;
-  bottom: 36px;
+  bottom: 40px;
   z-index: 30;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px;
+  padding: 12px;
   background: var(--ppv-surface);
   border: 1px solid var(--ppv-border);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--ppv-shadow-3);
   max-width: calc(100% - 16px);
 }
 .ppv-mark-panel[hidden] {
   display: none;
+}
+.ppv-mark-panel:not([hidden]) {
+  animation: ppv-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .ppv-mark-row {
   display: flex;
@@ -868,23 +973,6 @@
   border-color: var(--ppv-text-primary);
   box-shadow: 0 0 0 2px var(--ppv-surface) inset;
 }
-.ppv-mark-color-input {
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  overflow: hidden;
-  background: transparent;
-  cursor: pointer;
-}
-.ppv-mark-color-input::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-.ppv-mark-color-input::-webkit-color-swatch {
-  border: 1px solid var(--ppv-border);
-  border-radius: 50%;
-}
 .ppv-mark-widths {
   display: flex;
   align-items: center;
@@ -928,7 +1016,7 @@
 /* ---------------- 主题切换菜单 ---------------- */
 .ppv-theme-menu {
   position: absolute;
-  top: 56px;
+  top: 68px;
   right: 8px;
   z-index: 35;
   display: none;
@@ -943,6 +1031,7 @@
 }
 .ppv-theme-menu.open {
   display: flex;
+  animation: ppv-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .ppv-theme-item {
   display: flex;
@@ -1013,4 +1102,234 @@
 .ppv-mark-width-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* ---------------- 自实现开关 ---------------- */
+.ppv-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ppv-text-primary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.ppv-switch:hover {
+  background: var(--ppv-hover);
+}
+.ppv-switch:focus-visible {
+  outline: 2px solid var(--ppv-primary);
+  outline-offset: 1px;
+}
+.ppv-switch-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: #bdc1c6;
+  transition: background-color 0.18s ease;
+}
+.ppv-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ppv-switch[aria-checked="true"] .ppv-switch-track {
+  background: var(--ppv-primary);
+}
+.ppv-switch[aria-checked="true"] .ppv-switch-track::after {
+  transform: translateX(16px);
+}
+.ppv-switch-label {
+  white-space: nowrap;
+}
+.ppv-mark-fill {
+  margin-left: 4px;
+}
+
+/* ---------------- 自实现取色器 ---------------- */
+.ppv-colorpicker {
+  position: relative;
+  display: inline-flex;
+}
+.ppv-colorpicker-trigger {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid var(--ppv-border);
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+.ppv-colorpicker-trigger:hover {
+  transform: scale(1.12);
+  border-color: var(--ppv-primary);
+}
+.ppv-colorpicker-trigger.on-palette {
+  border-color: var(--ppv-text-tertiary);
+}
+.ppv-colorpicker-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 45;
+  display: none;
+  padding: 10px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
+}
+.ppv-colorpicker.open .ppv-colorpicker-pop {
+  display: block;
+  animation: ppv-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ppv-colorpicker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 20px);
+  gap: 6px;
+}
+.ppv-colorpicker-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.ppv-colorpicker-swatch:hover {
+  transform: scale(1.15);
+}
+.ppv-colorpicker-swatch.active {
+  border-color: var(--ppv-text-primary);
+  box-shadow: 0 0 0 2px var(--ppv-surface) inset;
+}
+.ppv-colorpicker-hex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ppv-border);
+}
+.ppv-colorpicker-preview {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--ppv-border);
+}
+.ppv-colorpicker-hex {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  color: var(--ppv-text-primary);
+  background: var(--ppv-bg-input);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.ppv-colorpicker-hex:focus {
+  background: var(--ppv-surface);
+  border-color: var(--ppv-primary);
+}
+
+/* ---------------- 弹出动画 ---------------- */
+@keyframes ppv-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------------- 文本标注输入弹窗 ---------------- */
+.ppv-text-input {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--ppv-surface);
+  border: 1px solid var(--ppv-border);
+  border-radius: 12px;
+  box-shadow: var(--ppv-shadow-3);
+  animation: ppv-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ppv-text-input-field {
+  width: 100%;
+  min-height: 40px;
+  max-height: 140px;
+  padding: 8px 10px;
+  resize: vertical;
+  background: var(--ppv-bg-input);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.ppv-text-input-field:hover {
+  background: var(--ppv-bg-input-hover);
+}
+.ppv-text-input-field:focus {
+  background: var(--ppv-surface);
+  border-color: var(--ppv-primary);
+  box-shadow: 0 0 0 1px var(--ppv-primary) inset;
+}
+.ppv-text-input-field::placeholder {
+  color: var(--ppv-text-tertiary);
+}
+.ppv-text-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 主题菜单：自定义强调色行 */
+.ppv-theme-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--ppv-border);
+  color: var(--ppv-text-secondary);
+  font-size: 13px;
+}
+.ppv-theme-custom .ppv-colorpicker-pop {
+  right: auto;
+  left: 0;
 }

@@ -3,6 +3,8 @@
  *   工具行 / 样式行（颜色、线宽、填充）/ 操作行（撤销、重做、删除、清空、导出、导入）。
  */
 import { markIconSvg } from "./markIcons"
+import { ColorPicker } from "../ui/ColorPicker"
+import { PpvSwitch } from "../ui/Switch"
 import type { MarkTool, MarkStyle } from "./marks"
 
 export interface MarkPanelHandlers {
@@ -54,8 +56,8 @@ export class MarkPanel {
   private readonly clearBtn: HTMLButtonElement
   private readonly widthBtns = new Map<number, HTMLButtonElement>()
   private readonly widthInput: HTMLInputElement
-  private readonly fillChk: HTMLInputElement
-  private readonly colorInput: HTMLInputElement
+  private readonly fillSwitch: PpvSwitch
+  private readonly colorPicker: ColorPicker
   private readonly colorSwatches = new Map<string, HTMLButtonElement>()
   private open = false
 
@@ -98,14 +100,13 @@ export class MarkPanel {
       colorBox.appendChild(sw)
       this.colorSwatches.set(color, sw)
     }
-    const colorInput = document.createElement("input")
-    colorInput.type = "color"
-    colorInput.className = "ppv-mark-color-input"
-    colorInput.title = "自定义颜色"
-    colorInput.value = "#d93025"
-    colorInput.addEventListener("input", () => this.setColor(colorInput.value))
-    this.colorInput = colorInput
-    colorBox.appendChild(colorInput)
+    // 自实现取色器（替代原生 color input）
+    this.colorPicker = new ColorPicker({
+      value: "#d93025",
+      title: "自定义颜色",
+      onChange: (color) => this.setColor(color),
+    })
+    colorBox.appendChild(this.colorPicker.el)
 
     const widthBox = document.createElement("div")
     widthBox.className = "ppv-mark-widths"
@@ -148,19 +149,13 @@ export class MarkPanel {
     this.widthInput = widthInput
     widthBox.appendChild(widthInput)
 
-    const fillLabel = document.createElement("label")
-    fillLabel.className = "ppv-find-option ppv-mark-fill"
-    const fillChk = document.createElement("input")
-    fillChk.type = "checkbox"
-    fillChk.checked = true
-    fillLabel.appendChild(fillChk)
-    fillLabel.appendChild(document.createTextNode("填充"))
-    fillChk.addEventListener("change", () => {
-      this.handlers.onStyleChange({ fill: fillChk.checked })
-    })
-    this.fillChk = fillChk
+    // 填充开关（自实现）
+    this.fillSwitch = new PpvSwitch("填充", true, (checked) =>
+      this.handlers.onStyleChange({ fill: checked }),
+    )
+    this.fillSwitch.el.classList.add("ppv-mark-fill")
 
-    styleRow.append(colorBox, widthBox, fillLabel)
+    styleRow.append(colorBox, widthBox, this.fillSwitch.el)
     this.el.appendChild(styleRow)
 
     // ---- 操作行 ----
@@ -228,7 +223,7 @@ export class MarkPanel {
       for (const [color, sw] of this.colorSwatches) {
         sw.classList.toggle("active", color === style.color)
       }
-      this.colorInput.value = style.color
+      this.colorPicker.setColor(style.color)
     }
     if (style.lineWidth !== undefined) {
       for (const [w, btn] of this.widthBtns) {
@@ -237,7 +232,7 @@ export class MarkPanel {
       this.widthInput.value = String(style.lineWidth)
     }
     if (style.fill !== undefined) {
-      this.fillChk.checked = style.fill
+      this.fillSwitch.setChecked(style.fill)
     }
   }
 
@@ -247,7 +242,7 @@ export class MarkPanel {
       for (const [color, sw] of this.colorSwatches) {
         sw.classList.toggle("active", color === style.color)
       }
-      this.colorInput.value = style.color
+      this.colorPicker.setColor(style.color)
     }
     if (style.lineWidth !== undefined) {
       for (const [w, btn] of this.widthBtns) {
@@ -256,7 +251,7 @@ export class MarkPanel {
       this.widthInput.value = String(style.lineWidth)
     }
     if (style.fill !== undefined) {
-      this.fillChk.checked = style.fill
+      this.fillSwitch.setChecked(style.fill)
     }
     this.handlers.onStyleChange(style)
   }

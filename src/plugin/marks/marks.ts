@@ -1,3 +1,4 @@
+import { TextInput } from "../ui/TextInput"
 /**
  * 标绘层（MarkLayer）
  *
@@ -60,6 +61,8 @@ export interface MarkLayerOptions {
     ) => { viewport: { transform: number[]; scale: number }; div: HTMLElement } | null
     pagesCount?: number
   } | null
+  /** 获取插件根节点（用于挂载文本输入弹窗，继承主题变量） */
+  getRoot?: () => HTMLElement | null
   onMarksChange?: (marks: Mark[]) => void
 }
 
@@ -102,6 +105,7 @@ export class MarkLayerManager {
 
   private selectedId: string | null = null
   private idSeq = 0
+  private textInput: TextInput | null = null
 
   private readonly keydownHandler = (e: KeyboardEvent) => this.onKeyDown(e)
 
@@ -116,7 +120,11 @@ export class MarkLayerManager {
   setActive(active: boolean): void {
     this.active = active
     this.cancelSession()
-    if (!active) this.selectedId = null
+    if (!active) {
+      this.selectedId = null
+      this.textInput?.destroy()
+      this.textInput = null
+    }
     for (const layer of this.layers.values()) {
       layer.canvas.style.pointerEvents = active ? "auto" : "none"
       layer.canvas.style.cursor = active ? this.cursorFor(this.tool) : "default"
@@ -250,6 +258,8 @@ export class MarkLayerManager {
   /** 文档切换时调用：销毁所有图层并清空数据。 */
   reset(): void {
     this.cancelSession()
+    this.textInput?.destroy()
+    this.textInput = null
     for (const layer of this.layers.values()) {
       layer.ro.disconnect()
       layer.mo.disconnect()
@@ -265,6 +275,8 @@ export class MarkLayerManager {
 
   destroy(): void {
     document.removeEventListener("keydown", this.keydownHandler)
+    this.textInput?.destroy()
+    this.textInput = null
     this.reset()
   }
 
@@ -394,10 +406,29 @@ export class MarkLayerManager {
     ctx.lineCap = "round"
 
     if (mark.type === "text" && mark.text) {
-      const fontSize = (mark.style.fontSize || 16) / scaleX
+      // 注意：页面变换矩阵包含 Y 轴翻转（PDF 坐标 Y 向上、Canvas Y 向下），
+      // 直接在页面变换下 fillText 会把文字画反。这里改为单位变换下绘制：
+      // 手动把页坐标映射为像素坐标，并沿页面旋转角旋转（旋转页面时文字跟随）。
+      const vp = this.pageView(mark.pageNumber)?.viewport
+      const t = vp?.transform ?? [scaleX, 0, 0, -scaleX, 0, 0]
+      const dpr = window.devicePixelRatio || 1
+      const p = mark.points[0]
+      // 注意：px/py 为 CSS 像素坐标，不能再乘 dpr——
+      // 下方 setTransform(dpr, ...) 已把 translate 的坐标换算为物理像素，
+      // 若这里再乘一次，在 Retina（dpr=2）屏上文字会偏移到点击位置×dpr 处。
+      const px = t[0] * p.x + t[2] * p.y + t[4]
+      const py = t[1] * p.x + t[3] * p.y + t[5]
+      const angle = Math.atan2(t[1], t[0])
+      const fontSize = mark.style.fontSize || 16
+      ctx.save()
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.translate(px, py)
+      ctx.rotate(angle)
       ctx.font = `${fontSize}px "Google Sans", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif`
-      ctx.textBaseline = "top"
-      ctx.fillText(mark.text, mark.points[0].x, mark.points[0].y)
+      // 垂直居中于点击点：文字上下各半围绕锚点，而不是从锚点向下展开
+      ctx.textBaseline = "middle"
+      ctx.fillText(mark.text, 0, 0)
+      ctx.restore()
     } else if (mark.type === "ink") {
       this.drawInk(ctx, mark.points, mark.style, scaleX)
     } else if (mark.type === "marker") {
@@ -767,10 +798,7 @@ export class MarkLayerManager {
 
     this.selectedId = null
     if (this.tool === "text") {
-      const text = window.prompt("输入标注文字：")
-      if (text && text.trim()) {
-        this.addMark(pageNumber, "text", [p], { text: text.trim() })
-      }
+      this.openTextInput(pageNumber, p, e.clientX, e.clientY)
       return
     }
 
@@ -909,6 +937,25 @@ export class MarkLayerManager {
         this.deleteSelected()
       }
     }
+  }
+
+  /** 打开自绘文本输入弹窗（替代 window.prompt）。 */
+  private openTextInput(pageNumber: number, p: MarkPoint, clientX: number, clientY: number): void {
+    this.textInput?.destroy()
+    this.textInput = new TextInput({
+      x: clientX,
+      y: clientY,
+      color: this.style.color,
+      onSubmit: (text) => {
+        this.textInput = null
+        this.addMark(pageNumber, "text", [p], { text })
+      },
+      onCancel: () => {
+        this.textInput = null
+      },
+    })
+    const root = this.options.getRoot?.()
+    ;(root ?? document.body).appendChild(this.textInput.el)
   }
 
   private cancelSession(): void {
