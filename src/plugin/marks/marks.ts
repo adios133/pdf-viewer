@@ -370,8 +370,7 @@ export class MarkLayerManager {
     const session = this.session
     if (session && session.pageNumber === pageNumber && session.points.length > 0) {
       // pen/ink 的点已实时采样进 session.points，preview 只用于直线/矩形等拖拽式工具
-      const isFreehand =
-        this.tool === "pen" || this.tool === "ink" || this.tool === "marker"
+      const isFreehand = this.tool === "pen" || this.tool === "ink" || this.tool === "marker"
       const points = isFreehand
         ? session.points
         : session.preview
