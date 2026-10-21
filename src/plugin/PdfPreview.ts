@@ -1139,6 +1139,8 @@ export class PdfPreview {
       const toolKeys: Record<string, MarkTool> = {
         v: "select",
         p: "pen",
+        k: "ink",
+        m: "marker",
         l: "line",
         a: "arrow",
         r: "rect",

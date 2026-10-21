@@ -278,6 +278,97 @@ try {
   await sleep(200)
   console.log(`PEN NO-RETURN-LINE (expect 0): ${penReturnLine}`)
 
+  // 1.6 水墨笔测试：绘制水平线，验证类型、墨迹像素、笔锋收窄（起收 < 中段）
+  await evalJs(`document.querySelector('.ppv-mark-panel button[data-tool="ink"]').click()`)
+  await sleep(200)
+  const inkResult = await evalJs(`(() => {
+    const c = document.querySelector('.ppv-mark-canvas');
+    const r = c.getBoundingClientRect();
+    const fire = (type, x, y) => c.dispatchEvent(new PointerEvent(type, {
+      bubbles: true, pointerId: 4, isPrimary: true, pointerType: 'mouse',
+      clientX: r.left + x, clientY: r.top + y,
+    }));
+    fire('pointerdown', 150, 200);
+    // 8px 步长模拟真实鼠标高频移动（20px 步长会被速度因子压成快笔）
+    for (let x = 158; x <= 450; x += 8) fire('pointermove', x, 200);
+    const ctx = c.getContext('2d');
+    const snap = () => ctx.getImageData(0, 0, c.width, c.height).data;
+    // 松手前（预览态）与松手后（提交态）快照：必须逐像素一致，
+    // 否则说明毛边/晕染随机层在提交瞬间重新生成（用户可见的“边缘淡色图案”）
+    const before = snap();
+    fire('pointerup', 450, 200);
+    const after = snap();
+    let renderDiff = 0;
+    for (let i = 0; i < before.length; i++) if (before[i] !== after[i]) renderDiff++;
+    const marks = window.__ppvPreview.getMarks();
+    const m = marks[marks.length - 1] || {};
+    const d = snap();
+    let pixels = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 10) pixels++;
+    // 笔锋：x=165（起笔附近）、x=300（中段）、x=435（收笔附近）三列的主墨高度
+    // 阈值取 alpha>150 排除淡墨晕染层，只统计主墨，才能看出笔锋收窄
+    const colHeight = (x) => {
+      let h = 0;
+      for (let y = 150; y <= 250; y++) {
+        const idx = (y * c.width + x) * 4 + 3;
+        if (d[idx] > 150) h++;
+      }
+      return h;
+    };
+    // 边缘干净度：笔画带（y 188~212）之外的任何淡色像素（alpha>10）都应不存在
+    // ——松手后边缘若残留淡色毛边/碎斑，该计数会明显大于 0
+    let stray = 0;
+    for (let y = 150; y <= 250; y++) {
+      if (y >= 188 && y <= 212) continue;
+      for (let x = 130; x <= 470; x++) {
+        const a = d[(y * c.width + x) * 4 + 3];
+        if (a > 10) stray++;
+      }
+    }
+    return JSON.stringify({ type: m.type, points: m.points?.length ?? 0, pixels, head: colHeight(165), mid: colHeight(300), tail: colHeight(435), stray, renderDiff });
+  })()`)
+  await evalJs(`window.__ppvPreview.clearMarks()`)
+  await sleep(200)
+  console.log(`INK BRUSH: ${inkResult}`)
+
+  // 1.7 水性笔测试：半透明圆头标记 + 自定义宽度（输入 12px 验证生效）
+  await evalJs(`document.querySelector('.ppv-mark-panel button[data-tool="marker"]').click()`)
+  await sleep(200)
+  const markerResult = await evalJs(`(() => {
+    const c = document.querySelector('.ppv-mark-canvas');
+    const r = c.getBoundingClientRect();
+    const fire = (type, x, y) => c.dispatchEvent(new PointerEvent(type, {
+      bubbles: true, pointerId: 5, isPrimary: true, pointerType: 'mouse',
+      clientX: r.left + x, clientY: r.top + y,
+    }));
+    // 将自定义宽度设为 12
+    const wi = document.querySelector('.ppv-mark-width-input');
+    wi.value = '12';
+    wi.dispatchEvent(new Event('input', { bubbles: true }));
+    fire('pointerdown', 150, 260);
+    for (let x = 158; x <= 450; x += 8) fire('pointermove', x, 260);
+    fire('pointerup', 450, 260);
+    const marks = window.__ppvPreview.getMarks();
+    const m = marks[marks.length - 1] || {};
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    // 笔画中心线（y=260）列的 alpha 应约为 0.5（半透明，下层文字可见），而非 1.0
+    let lineAlpha = 0;
+    for (let y = 250; y <= 270; y++) {
+      const a = d[(y * c.width + 300) * 4 + 3];
+      if (a > lineAlpha) lineAlpha = a;
+    }
+    // 自定义宽度 12px（scale≈0.87 时 12/scale ≈ 13.8 页坐标 ≈ 12 CSS px）→ 列高约 10~14px
+    let colH = 0;
+    for (let y = 230; y <= 290; y++) {
+      if (d[(y * c.width + 300) * 4 + 3] > 20) colH++;
+    }
+    const widthInputValue = wi.value;
+    return JSON.stringify({ type: m.type, points: m.points?.length ?? 0, lineAlpha, colH, widthInputValue });
+  })()`)
+  await evalJs(`window.__ppvPreview.clearMarks()`)
+  await sleep(200)
+  console.log(`MARKER PEN: ${markerResult}`)
+
   // 2. 选择直线工具
   await evalJs(`document.querySelector('.ppv-mark-panel button[data-tool="line"]').click()`)
   await sleep(200)

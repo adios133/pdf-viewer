@@ -19,6 +19,8 @@ export interface MarkPanelHandlers {
 const TOOLS: Array<{ tool: MarkTool; title: string }> = [
   { tool: "select", title: "选择 / 移动 (V)" },
   { tool: "pen", title: "画笔 (P)" },
+  { tool: "ink", title: "水墨笔 (K)" },
+  { tool: "marker", title: "水性笔 (M)" },
   { tool: "line", title: "直线 (L)" },
   { tool: "arrow", title: "箭头 (A)" },
   { tool: "rect", title: "矩形 (R)" },
@@ -51,6 +53,7 @@ export class MarkPanel {
   private readonly deleteBtn: HTMLButtonElement
   private readonly clearBtn: HTMLButtonElement
   private readonly widthBtns = new Map<number, HTMLButtonElement>()
+  private readonly widthInput: HTMLInputElement
   private readonly fillChk: HTMLInputElement
   private readonly colorInput: HTMLInputElement
   private readonly colorSwatches = new Map<string, HTMLButtonElement>()
@@ -120,6 +123,30 @@ export class MarkPanel {
       widthBox.appendChild(btn)
       this.widthBtns.set(w, btn)
     }
+
+    // 自定义宽度输入（1~64，任意值）
+    const widthInput = document.createElement("input")
+    widthInput.type = "number"
+    widthInput.className = "ppv-mark-width-input"
+    widthInput.min = "1"
+    widthInput.max = "64"
+    widthInput.step = "1"
+    widthInput.title = "自定义笔宽 (1-64)"
+    widthInput.value = "2"
+    widthInput.addEventListener("input", () => {
+      const v = Number(widthInput.value)
+      if (!Number.isFinite(v)) return
+      const clamped = Math.round(Math.min(64, Math.max(1, v)))
+      this.applyStyleLocal({ lineWidth: clamped })
+      this.handlers.onStyleChange({ lineWidth: clamped })
+    })
+    widthInput.addEventListener("blur", () => {
+      const v = Number(widthInput.value)
+      const clamped = Number.isFinite(v) ? Math.min(64, Math.max(1, Math.round(v))) : 2
+      widthInput.value = String(clamped)
+    })
+    this.widthInput = widthInput
+    widthBox.appendChild(widthInput)
 
     const fillLabel = document.createElement("label")
     fillLabel.className = "ppv-find-option ppv-mark-fill"
@@ -195,6 +222,7 @@ export class MarkPanel {
     return this.tool
   }
 
+  /** 更新面板控件状态（色板高亮、宽度档位/输入框、填充开关）。 */
   setStyle(style: Partial<MarkStyle>): void {
     if (style.color) {
       for (const [color, sw] of this.colorSwatches) {
@@ -206,18 +234,39 @@ export class MarkPanel {
       for (const [w, btn] of this.widthBtns) {
         btn.classList.toggle("active", w === style.lineWidth)
       }
+      this.widthInput.value = String(style.lineWidth)
     }
     if (style.fill !== undefined) {
       this.fillChk.checked = style.fill
     }
   }
 
+  /** 本地立即刷新控件状态（不依赖外部回推），再通知宿主。 */
+  private applyStyleLocal(style: Partial<MarkStyle>): void {
+    if (style.color) {
+      for (const [color, sw] of this.colorSwatches) {
+        sw.classList.toggle("active", color === style.color)
+      }
+      this.colorInput.value = style.color
+    }
+    if (style.lineWidth !== undefined) {
+      for (const [w, btn] of this.widthBtns) {
+        btn.classList.toggle("active", w === style.lineWidth)
+      }
+      this.widthInput.value = String(style.lineWidth)
+    }
+    if (style.fill !== undefined) {
+      this.fillChk.checked = style.fill
+    }
+    this.handlers.onStyleChange(style)
+  }
+
   private setColor(color: string): void {
-    this.handlers.onStyleChange({ color })
+    this.applyStyleLocal({ color })
   }
 
   private setWidth(width: number): void {
-    this.handlers.onStyleChange({ lineWidth: width })
+    this.applyStyleLocal({ lineWidth: width })
   }
 
   setHistoryState(canUndo: boolean, canRedo: boolean, hasSelection: boolean): void {

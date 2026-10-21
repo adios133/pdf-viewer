@@ -10,7 +10,17 @@
  */
 
 export type MarkTool =
-  "select" | "pen" | "line" | "arrow" | "rect" | "ellipse" | "polygon" | "polyline" | "text"
+  | "select"
+  | "pen"
+  | "ink"
+  | "marker"
+  | "line"
+  | "arrow"
+  | "rect"
+  | "ellipse"
+  | "polygon"
+  | "polyline"
+  | "text"
 
 export interface MarkPoint {
   x: number
@@ -359,13 +369,14 @@ export class MarkLayerManager {
     // 绘制中的预览
     const session = this.session
     if (session && session.pageNumber === pageNumber && session.points.length > 0) {
-      // pen 的点已实时采样进 session.points，preview 只用于直线/矩形等拖拽式工具
-      const points =
-        this.tool === "pen"
-          ? session.points
-          : session.preview
-            ? [...session.points, session.preview]
-            : session.points
+      // pen/ink 的点已实时采样进 session.points，preview 只用于直线/矩形等拖拽式工具
+      const isFreehand =
+        this.tool === "pen" || this.tool === "ink" || this.tool === "marker"
+      const points = isFreehand
+        ? session.points
+        : session.preview
+          ? [...session.points, session.preview]
+          : session.points
       this.drawPreview(ctx, points, scaleX)
     }
   }
@@ -388,6 +399,10 @@ export class MarkLayerManager {
       ctx.font = `${fontSize}px "Google Sans", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif`
       ctx.textBaseline = "top"
       ctx.fillText(mark.text, mark.points[0].x, mark.points[0].y)
+    } else if (mark.type === "ink") {
+      this.drawInk(ctx, mark.points, mark.style, scaleX)
+    } else if (mark.type === "marker") {
+      this.drawMarker(ctx, mark.points, mark.style, scaleX)
     } else if (mark.type === "rect" || mark.type === "ellipse") {
       const [p1, p2] = mark.points
       const x = Math.min(p1.x, p2.x)
@@ -457,6 +472,167 @@ export class MarkLayerManager {
     ctx.stroke()
   }
 
+  /**
+   * 水墨笔渲染：
+   *   1. 路径 Catmull-Rom 平滑 + 高密度细分；
+   *   2. 沿路径逐点计算宽度（钟形笔锋 + 速度因子），生成左右轮廓多边形**一次填充**，
+   *      边缘连续平滑（避免逐段描边产生台阶锯齿）；
+   *   3. 淡墨晕染层用同轮廓外扩填充，端头加半圆帽；
+   *   4. 毛边纹理收敛在笔画**内部**（不超出轮廓），只做浓淡肌理，不外露毛刺。
+   * 随机种子只由点几何派生：预览、提交、缩放旋转重绘完全一致。
+   */
+  private drawInk(
+    ctx: CanvasRenderingContext2D,
+    points: MarkPoint[],
+    style: MarkStyle,
+    scaleX: number,
+  ): void {
+    if (points.length < 2) return
+    // 高密度细分，保证轮廓多边形平滑
+    const smooth = smoothInkPoints(points, 4)
+    const n = smooth.length
+    if (n < 2) return
+
+    const base = (style.lineWidth * 2.0) / scaleX
+    const rnd = seededRandom(inkSeedOf(points))
+
+    // ---- 逐点：半宽 + 法向 ----
+    const halfW = new Array<number>(n)
+    const normals = new Array<{ x: number; y: number }>(n)
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1)
+      const bell = Math.sin(Math.PI * (0.06 + 0.9 * t))
+      const cur = smooth[i]
+      const next = smooth[Math.min(n - 1, i + 1)]
+      const speed = this.inkSpeedFactor(cur, next, scaleX, base)
+      const w = base * (0.34 + 0.66 * Math.pow(bell, 1.1)) * speed
+      halfW[i] = w / 2
+      const prev = smooth[Math.max(0, i - 1)]
+      const dx = next.x - prev.x
+      const dy = next.y - prev.y
+      const len = Math.hypot(dx, dy)
+      normals[i] = len > 0 ? { x: -dy / len, y: dx / len } : { x: 0, y: 0 }
+    }
+
+    ctx.save()
+    ctx.fillStyle = style.color
+
+    // 轮廓填充：widen 为相对半宽的外扩倍数
+    const fillOutline = (widen: number, alpha: number) => {
+      ctx.globalAlpha = alpha
+      ctx.beginPath()
+      // 左侧轮廓（起点 → 终点）
+      for (let i = 0; i < n; i++) {
+        const p = smooth[i]
+        const nrm = normals[i]
+        const w = Math.max(0.25, halfW[i] * widen)
+        const x = p.x + nrm.x * w
+        const y = p.y + nrm.y * w
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      // 右侧轮廓（终点 → 起点）
+      for (let i = n - 1; i >= 0; i--) {
+        const p = smooth[i]
+        const nrm = normals[i]
+        const w = Math.max(0.25, halfW[i] * widen)
+        ctx.lineTo(p.x - nrm.x * w, p.y - nrm.y * w)
+      }
+      ctx.closePath()
+      ctx.fill()
+      // 两端半圆帽，收笔圆润
+      for (const i of [0, n - 1]) {
+        const p = smooth[i]
+        const w = Math.max(0.25, halfW[i] * widen)
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, w, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+
+    // ---- 1. 淡墨晕染层（外扩、平滑轮廓） ----
+    fillOutline(2.4, 0.07)
+
+    // ---- 2. 主墨层（一次填充，边缘平滑） ----
+    fillOutline(1, 0.94)
+
+    // ---- 3. 内部纹理：沿中线轻微起伏的浓淡细线（始终在笔画内部） ----
+    ctx.lineCap = "round"
+    ctx.lineJoin = "round"
+    for (let s = 0; s < 2; s++) {
+      const jitterAmp = base * (0.12 + rnd() * 0.12)
+      const phase = rnd() * Math.PI * 2
+      ctx.globalAlpha = 0.2
+      ctx.lineWidth = Math.max(0.3, base * 0.1)
+      ctx.beginPath()
+      for (let i = 0; i < n; i++) {
+        const p = smooth[i]
+        const nrm = normals[i]
+        const t = i / (n - 1)
+        const fade = Math.sin(Math.PI * t)
+        // 偏移限制在笔画内部（半宽的 55% 以内）
+        const raw = (Math.sin(phase + t * 9) * 0.7 + (rnd() * 2 - 1) * 0.3) * jitterAmp * fade
+        const off = Math.max(-halfW[i] * 0.55, Math.min(halfW[i] * 0.55, raw))
+        const x = p.x + nrm.x * off
+        const y = p.y + nrm.y * off
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+
+  /**
+   * 速度因子：段长越短（移动越慢）笔画越粗越浓。
+   * 参考长度取基础宽度，退化为稳定值。
+   */
+  private inkSpeedFactor(a: MarkPoint, b: MarkPoint, scaleX: number, base: number): number {
+    // 段长越短（移动越慢）笔画越粗；参考段长按 2~8 CSS px 的真实采样步长设计
+    const dCss = Math.hypot(b.x - a.x, b.y - a.y) * scaleX
+    void base
+    return clamp(1.3 - (dCss - 2) / 26, 0.6, 1.3)
+  }
+
+  /**
+   * 水性笔渲染：半透明、圆头、均匀宽度的书写笔触（适合划重点/圈注/笔记）。
+   * 单层半透明描边，同一笔画内部不叠加变深，不同笔画重叠处自然加深；
+   * 宽度直接使用用户设定的 lineWidth（视觉 CSS px），支持 1~64 自定义。
+   */
+  private drawMarker(
+    ctx: CanvasRenderingContext2D,
+    points: MarkPoint[],
+    style: MarkStyle,
+    scaleX: number,
+  ): void {
+    const width = Math.max(0.5, style.lineWidth / scaleX)
+    ctx.save()
+    ctx.strokeStyle = style.color
+    ctx.fillStyle = style.color
+    ctx.lineCap = "round"
+    ctx.lineJoin = "round"
+    ctx.globalAlpha = 0.5
+
+    if (points.length < 2) {
+      // 点按：画一个圆点
+      const p = points[0]
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, width / 2, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.restore()
+      return
+    }
+
+    // 轻平滑（细分 2），保持书写笔迹流畅但不拖沓
+    const smooth = smoothInkPoints(points, 2)
+    ctx.lineWidth = width
+    ctx.beginPath()
+    ctx.moveTo(smooth[0].x, smooth[0].y)
+    for (let i = 1; i < smooth.length; i++) ctx.lineTo(smooth[i].x, smooth[i].y)
+    ctx.stroke()
+    ctx.restore()
+  }
+
   private drawPreview(ctx: CanvasRenderingContext2D, points: MarkPoint[], scaleX: number): void {
     ctx.save()
     ctx.strokeStyle = this.style.color
@@ -467,7 +643,13 @@ export class MarkLayerManager {
     ctx.globalAlpha = 0.85
 
     const tool = this.tool
-    if (tool === "rect" || tool === "ellipse") {
+    if (tool === "ink") {
+      // 水墨笔实时预览（与最终渲染一致，种子固定保证稳定）
+      this.drawInk(ctx, points, this.style, scaleX)
+    } else if (tool === "marker") {
+      // 水性笔实时预览
+      this.drawMarker(ctx, points, this.style, scaleX)
+    } else if (tool === "rect" || tool === "ellipse") {
       const [p1, p2] = points
       const x = Math.min(p1.x, p2.x)
       const y = Math.min(p1.y, p2.y)
@@ -617,11 +799,12 @@ export class MarkLayerManager {
     }
 
     const tool = this.tool
-    if (tool === "pen") {
+    if (tool === "pen" || tool === "ink" || tool === "marker") {
       const last = this.session.lastPoint
       const s = this.session.points
       const scaleX = this.scaleXOf(pageNumber)
-      const minDist = Math.max(0.5, 1.5 / scaleX)
+      // 水墨笔采样更密一些，笔触更顺滑
+      const minDist = Math.max(0.5, (tool === "ink" ? 1.1 : 1.5) / scaleX)
       if (!last || Math.hypot(p.x - last.x, p.y - last.y) >= minDist) {
         s.push(p)
         this.session.lastPoint = p
@@ -670,8 +853,8 @@ export class MarkLayerManager {
     const session = this.session
     const pts = session.preview ? [...session.points, session.preview] : [...session.points]
 
-    if (tool === "pen") {
-      if (session.points.length >= 2) this.addMark(pageNumber, "pen", session.points)
+    if (tool === "pen" || tool === "ink" || tool === "marker") {
+      if (session.points.length >= 2) this.addMark(pageNumber, tool, session.points)
       this.session = null
     } else if (tool === "line" || tool === "arrow") {
       if (pts.length >= 2) this.addMark(pageNumber, tool, [pts[0], pts[pts.length - 1]])
@@ -804,9 +987,14 @@ export class MarkLayerManager {
     if (mark.type === "polygon") {
       if (this.pointInPolygon(p, pts)) return true
     }
-    // 线段距离判定（pen/line/arrow/polygon/polyline）
+    // 线段距离判定（pen/ink/line/arrow/polygon/polyline）
+    // 水墨笔笔画更粗，命中容差按线宽放宽
+    const segTol =
+      mark.type === "ink" || mark.type === "marker"
+        ? Math.max(tol, (mark.style.lineWidth * 0.9) / this.scaleXOf(mark.pageNumber))
+        : tol
     for (let i = 0; i < pts.length - 1; i++) {
-      if (this.distToSegment(p, pts[i], pts[i + 1]) <= tol) return true
+      if (this.distToSegment(p, pts[i], pts[i + 1]) <= segTol) return true
     }
     return false
   }
@@ -891,4 +1079,65 @@ export class MarkLayerManager {
   private emitChange(): void {
     this.options.onMarksChange?.(this.getMarks())
   }
+}
+
+// ================= 水墨笔工具函数 =================
+
+function clamp(v: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, v))
+}
+
+/** 由笔画点序列生成确定性种子：只依赖几何，预览与提交渲染完全一致。 */
+function inkSeedOf(points: MarkPoint[]): number {
+  let h = 2166136261
+  for (const p of points) {
+    h ^= Math.round(p.x * 100)
+    h = Math.imul(h, 16777619)
+    h ^= Math.round(p.y * 100)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+/** mulberry32 伪随机数生成器：同一种子序列完全一致。 */
+function seededRandom(seed: number): () => number {
+  let a = seed
+  return () => {
+    a |= 0
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function catmullRom(
+  p0: MarkPoint,
+  p1: MarkPoint,
+  p2: MarkPoint,
+  p3: MarkPoint,
+  t: number,
+): MarkPoint {
+  const t2 = t * t
+  const t3 = t2 * t
+  const f = (a: number, b: number, c: number, d: number) =>
+    0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3)
+  return { x: f(p0.x, p1.x, p2.x, p3.x), y: f(p0.y, p1.y, p2.y, p3.y) }
+}
+
+/** Catmull-Rom 平滑并在每段内细分（用于水墨笔的顺滑笔触）。 */
+function smoothInkPoints(points: MarkPoint[], subdiv: number): MarkPoint[] {
+  if (points.length < 2) return points.slice()
+  const out: MarkPoint[] = [points[0]]
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[Math.min(points.length - 1, i + 2)]
+    for (let s = 1; s <= subdiv; s++) {
+      out.push(catmullRom(p0, p1, p2, p3, s / (subdiv + 1)))
+    }
+  }
+  out.push(points[points.length - 1])
+  return out
 }

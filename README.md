@@ -37,6 +37,7 @@ await preview.load()
 
 // 标绘 API
 preview.toggleMarks(true)
+// 标绘工具：V 选择、P 画笔、K 水墨笔、L 直线、A 箭头、R 矩形、O 椭圆、G 多边形、N 折线、T 文字
 preview.setMarks([...]) / preview.getMarks() / preview.clearMarks()
 preview.exportMarks() / preview.importMarks(json)
 preview.on("markschange", ({ marks }) => ...)
@@ -74,7 +75,7 @@ preview.destroy()
 - 文本选择与复制（TextLayer）
 - 查找（Ctrl+F）：匹配计数、高亮全部、区分大小写、上一个/下一个、循环提示
 - 打印（隐藏 iframe 逐页渲染）、下载（同源直链 / getData 兜底）
-- 标绘层：画笔/直线/箭头/矩形/椭圆/多边形/折线/文字标注，颜色/线宽/填充可调，
+- 标绘层：画笔 + 水墨笔（变宽笔锋、墨晕、毛边飞白）、直线/箭头/矩形/椭圆/多边形/折线/文字标注，颜色/线宽/填充可调，
   选择移动、撤销重做、清空、JSON 导入导出；随缩放/旋转自动同步
 - 主题切换：预设浅色 / 深色 / 护眼米黄 / 森林绿 4 套主题，
   工具栏调色板按钮一键切换，localStorage 记忆（`persistTheme: false` 关闭）

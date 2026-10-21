@@ -3,6 +3,10 @@
 export const markIcons = {
   select: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 L5 16 L9.5 12.5 L12.5 20.5 L15 19.5 L12 11.5 L17 11.5 Z"/></svg>`,
   pen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L4 16 L16 4 L20 8 L8 20 Z"/><path d="M13.5 6.5 L17.5 10.5"/></svg>`,
+  /** 水墨笔（墨滴） */
+  ink: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 4.5 5.5 8 5.5 11a5.5 5.5 0 0 1-11 0C6.5 11 8.5 7.5 12 3z"/><path d="M9.5 13.5a2.5 2.5 0 0 0 2.5 2.5"/></svg>`,
+  /** 水性笔 / 荧光笔（划线标记） */
+  marker: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4l4 4-9.5 9.5H6V13L16 4z"/><path d="M4 21h16"/></svg>`,
   line: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 19 L19 5"/></svg>`,
   arrow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L19 5"/><path d="M10.5 5 L19 5 L19 13.5"/></svg>`,
   rect: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>`,
