@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      pdfjs-dist:
-        specifier: ^6.2.108
-        version: 6.2.108
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -21,6 +17,9 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@10.8.0)
+      pdfjs-dist:
+        specifier: ^6.2.108
+        version: 6.2.108
       prettier:
         specifier: ^3.9.6
         version: 3.9.6

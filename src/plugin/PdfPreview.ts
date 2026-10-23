@@ -19,6 +19,7 @@ import { getDocument } from "pdfjs-dist"
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist"
 import { pdfjsLib, loadViewerModule } from "./pdfjs"
 import type { ViewerModule } from "./pdfjs"
+import { resolvePdfPreviewAssets } from "./assets"
 import "pdfjs-dist/web/pdf_viewer.css"
 import "./style.css"
 import { FindBar, StatusBar, Toolbar } from "./toolbar"
@@ -41,8 +42,6 @@ import type { Mark, MarkTool } from "./marks/marks"
 import { MarkPanel } from "./marks/MarkPanel"
 import { icons } from "./icons"
 
-const DEFAULT_CMAP_URL = `${import.meta.env.BASE_URL || "/"}pdfjs/cmaps/`
-const DEFAULT_STD_FONT_URL = `${import.meta.env.BASE_URL || "/"}pdfjs/standard_fonts/`
 const IDLE_CLEANUP_DELAY = 5000
 const THEME_STORAGE_KEY = "pdf-preview:theme"
 const ACCENT_STORAGE_KEY = "pdf-preview:accent"
@@ -764,9 +763,6 @@ export class PdfPreview {
 
   private async ensureViewer(): Promise<void> {
     if (this.viewer) return
-    if (this.options.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = this.options.workerSrc
-    }
     const mod = await loadViewerModule()
     const { PDFViewer, EventBus, PDFLinkService, PDFFindController } = mod
     this.viewerModule = mod
@@ -936,6 +932,15 @@ export class PdfPreview {
     this.showOverlay(filename ? `正在加载 ${filename}…` : "正在加载文档…")
 
     const opts = this.options
+    // 解析 worker / cMap / 字体 / wasm 等静态资源地址（实例选项 → 全局配置 → 默认 CDN）
+    const assets = resolvePdfPreviewAssets({
+      workerSrc: opts.workerSrc,
+      cMapUrl: opts.cMapUrl,
+      standardFontDataUrl: opts.standardFontDataUrl,
+      wasmUrl: opts.wasmUrl,
+      iccUrl: opts.iccUrl,
+    })
+    pdfjsLib.GlobalWorkerOptions.workerSrc = assets.workerSrc
     const loadingTask = getDocument({
       ...(url !== undefined ? { url } : {}),
       ...(data !== undefined ? { data } : {}),
@@ -943,9 +948,11 @@ export class PdfPreview {
       disableAutoFetch: opts.disableAutoFetch ?? false,
       disableStream: opts.disableStream ?? false,
       withCredentials: opts.withCredentials ?? false,
-      cMapUrl: opts.cMapUrl ?? DEFAULT_CMAP_URL,
+      cMapUrl: assets.cMapUrl,
       cMapPacked: opts.cMapPacked ?? true,
-      standardFontDataUrl: opts.standardFontDataUrl ?? DEFAULT_STD_FONT_URL,
+      standardFontDataUrl: assets.standardFontDataUrl,
+      wasmUrl: assets.wasmUrl,
+      iccUrl: assets.iccUrl,
       useSystemFonts: opts.useSystemFonts ?? true,
       ...(typeof opts.password === "string" ? { password: opts.password } : {}),
     })

@@ -1,6 +1,10 @@
 /**
  * 演示页面：挂载 PdfPreview 插件，支持切换远程/本地 PDF。
+ *
+ * 说明：演示页直接复用本地 node_modules 里的 worker（Vite `?url`），保证离线可跑；
+ * 库消费者不需要这样写 —— 缺省走 CDN，或用 configurePdfPreviewAssets 指到本地副本。
  */
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import { PdfPreview } from "./main"
 import { PpvSelect } from "./plugin/ui/Select"
 
@@ -24,6 +28,7 @@ async function mountPreview(url?: string) {
   preview = new PdfPreview({
     container: mount,
     url,
+    workerSrc,
     initialScale: "auto",
     showThumbnails: true,
     onLoad: (info) => {
@@ -62,6 +67,7 @@ fileInput.addEventListener("change", () => {
   preview = new PdfPreview({
     container: mount,
     file,
+    workerSrc,
     showThumbnails: true,
     onLoad: (info) => {
       hint.textContent = `已加载：${file.name} · ${info.numPages} 页`

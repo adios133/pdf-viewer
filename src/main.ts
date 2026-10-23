@@ -1,12 +1,15 @@
 /**
- * PdfPreview 插件入口
+ * PdfPreview 库入口
  *
  * 用法：
- *   import { PdfPreview } from "./main"
+ *   import { PdfPreview } from "pdf-preview-plugin"
+ *   import "pdf-preview-plugin/style.css"
  *   const preview = new PdfPreview({ url: "/file.pdf", container: el })
  *   await preview.load()
  */
 export { PdfPreview, createPdfPreview } from "./plugin/PdfPreview"
+export { configurePdfPreviewAssets, getPdfPreviewAssets, PDFJS_VERSION } from "./plugin/assets"
+export type { PdfPreviewAssets, PdfPreviewResolvedAssets } from "./plugin/assets"
 export type {
   PasswordCallback,
   PdfLoadInfo,

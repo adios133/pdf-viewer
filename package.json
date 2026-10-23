@@ -1,42 +1,66 @@
 {
-  "name": "pdf",
+  "name": "pdf-preview-plugin",
   "version": "1.0.0",
-  "description": "基于 pdf.js 的 PDF 预览插件（对齐浏览器内置查看器，支持大文件）",
-  "main": "index.js",
+  "description": "基于 pdf.js 的 PDF 预览库（支持大文件懒加载、缩略图、查找、标绘、主题），可通过 npm 引入其他项目",
+  "type": "module",
+  "main": "./dist/pdf-preview.js",
+  "module": "./dist/pdf-preview.js",
+  "types": "./dist/types/main.d.ts",
+  "style": "./dist/style.css",
+  "exports": {
+    ".": {
+      "types": "./dist/types/main.d.ts",
+      "import": "./dist/pdf-preview.js",
+      "default": "./dist/pdf-preview.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/style.css"
+  ],
   "scripts": {
+    "dev": "vite --host",
+    "build": "npm run build:lib && npm run build:types",
+    "build:lib": "vite build",
+    "build:types": "tsc -p tsconfig.build.json && node scripts/strip-dts-css.mjs",
+    "build:demo": "vite build --mode demo",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "npm run typecheck && npm run lint && npm run build",
-    "dev": "vite --host",
-    "build": "vite build",
-    "preview": "vite preview",
     "gen:sample": "node scripts/make-sample-pdf.mjs public/sample.pdf",
     "gen:large": "PAGES=500 node scripts/make-sample-pdf.mjs public/large.pdf",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "prepublishOnly": "npm run build",
+    "pack:check": "npm pack --dry-run"
   },
   "keywords": [
     "pdf",
     "pdf.js",
+    "pdfjs-dist",
     "viewer",
     "preview",
-    "pdfjs-dist"
+    "library"
   ],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "peerDependencies": {
+    "pdfjs-dist": "^6.2.0"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
+    "pdfjs-dist": "^6.2.108",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.1"
-  },
-  "dependencies": {
-    "pdfjs-dist": "^6.2.108"
   }
 }

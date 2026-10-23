@@ -48,7 +48,10 @@ export interface PdfPreviewOptions {
   data?: ArrayBuffer | Uint8Array
   /** 挂载点；缺省时创建一个铺满视口的浮层。 */
   container?: HTMLElement
-  /** 自定义 worker 地址；缺省使用随包发布的 worker。 */
+  /**
+   * 自定义 worker 地址；缺省用与 pdfjs-dist 版本一致的 CDN 地址。
+   * 离线/内网部署时建议通过 `configurePdfPreviewAssets()` 或此选项指到本地副本。
+   */
   workerSrc?: string
   /** 无文件名来源时使用的文件名（下载/标题等）。 */
   filename?: string
@@ -96,12 +99,16 @@ export interface PdfPreviewOptions {
   disableStream?: boolean
   /** 跨域请求是否携带凭据，缺省 false。 */
   withCredentials?: boolean
-  /** cMap 目录地址（CJK 等编码 PDF 需要），缺省自动探测 <base>/pdfjs/cmaps/。 */
+  /** cMap 目录地址（CJK 等编码 PDF 需要），缺省 CDN 上的 cmaps/ 目录，需以 / 结尾。 */
   cMapUrl?: string
   /** cMap 是否压缩（.bcmap），缺省 true。 */
   cMapPacked?: boolean
-  /** 标准字体目录地址，缺省自动探测 <base>/pdfjs/standard_fonts/。 */
+  /** 标准字体目录地址，缺省 CDN 上的 standard_fonts/ 目录，需以 / 结尾。 */
   standardFontDataUrl?: string
+  /** wasm 目录地址（JPEG2000 等图像解码需要），缺省 CDN 上的 wasm/ 目录，需以 / 结尾。 */
+  wasmUrl?: string
+  /** ICC 色彩配置目录地址，缺省 CDN 上的 iccs/ 目录，需以 / 结尾。 */
+  iccUrl?: string
   /** 是否允许在 worker 中使用 eval，缺省 false（更安全）。 */
   isEvalSupported?: boolean
   /** 是否优先使用系统字体渲染，缺省 true。 */

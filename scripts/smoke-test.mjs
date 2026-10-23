@@ -5,11 +5,23 @@
  */
 /* global process, setTimeout, fetch, WebSocket, console, Buffer */
 import { spawn } from "node:child_process"
-import { writeFileSync } from "node:fs"
+import { existsSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { setTimeout as sleep } from "node:timers/promises"
 
-const CHROME =
-  process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+const CHROME_CANDIDATES =
+  process.platform === "darwin"
+    ? ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
+    : process.platform === "win32"
+      ? [
+          "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+          "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+          "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+        ]
+      : ["google-chrome", "google-chrome-stable", "chromium"]
+const CHROME = process.env.CHROME_PATH || CHROME_CANDIDATES.find((p) => existsSync(p)) || CHROME_CANDIDATES[0]
 const PORT = 9333
 const PAGE_URL = process.argv[2] || "http://localhost:5179/"
 const FIND_TERM = process.argv.find((a) => a.startsWith("--find="))?.slice(7)
@@ -69,7 +81,7 @@ const chrome = spawn(
     "--no-default-browser-check",
     "--disable-crash-reporter",
     "--disable-breakpad",
-    "--user-data-dir=/tmp/ppv-cdp",
+    `--user-data-dir=${join(tmpdir(), "ppv-cdp")}`,
     `--remote-debugging-port=${PORT}`,
     "about:blank",
   ],
