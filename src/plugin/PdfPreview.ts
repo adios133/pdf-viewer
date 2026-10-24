@@ -341,6 +341,8 @@ export class PdfPreview {
   toggleThumbnails(open?: boolean): void {
     const next = open ?? !this.sidebarEl.classList.contains("open")
     this.sidebarEl.classList.toggle("open", next)
+    // 标记侧栏展开状态：工具栏据此右移，与预览区保持视觉居中（见 style.css）
+    this.root.classList.toggle("ppv-sidebar-open", next)
     this.toolbar.setThumbnailsActive(next)
     if (next) {
       this.thumbSidebar.highlight(this.currentPage || 1)

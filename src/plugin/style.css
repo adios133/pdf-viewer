@@ -29,6 +29,12 @@
   --ppv-scrollbar: #c4c7c5;
   --ppv-scrollbar-hover: #a8acaa;
   --ppv-spinner-track: #d7dce0;
+  /* 结构尺寸：缩略图侧栏打开时工具栏据此同步右移（保持与预览区视觉居中） */
+  --ppv-sidebar-width: 180px;
+  --ppv-sidebar-margin: 10px;
+  --ppv-sidebar-footprint: calc(var(--ppv-sidebar-width) + var(--ppv-sidebar-margin) * 2);
+  --ppv-toolbar-max-width: 1120px;
+  --ppv-toolbar-gap: 10px;
   --ppv-shadow-1: 0 1px 2px rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
   --ppv-shadow-2: 0 1px 2px rgb(60 64 67 / 30%), 0 2px 6px 2px rgb(60 64 67 / 15%);
   --ppv-shadow-3: 0 1px 3px rgb(60 64 67 / 30%), 0 4px 8px 3px rgb(60 64 67 / 15%);
@@ -163,9 +169,9 @@
   align-items: center;
   gap: 4px;
   height: 50px;
-  width: calc(100% - 20px);
-  max-width: 1120px;
-  margin: 10px auto 0;
+  width: calc(100% - var(--ppv-toolbar-gap) * 2);
+  max-width: var(--ppv-toolbar-max-width);
+  margin: var(--ppv-toolbar-gap) auto 0;
   padding: 0 10px;
   background: var(--ppv-surface);
   border: 1px solid var(--ppv-border);
@@ -174,6 +180,16 @@
     0 2px 10px rgb(0 0 0 / 26%),
     0 1px 3px rgb(0 0 0 / 20%);
   z-index: 20;
+}
+/* 打开缩略图侧栏后，预览区中心相对根容器右移了半个侧栏宽度，工具栏同步右移保持视觉居中；
+   横向空间不足时收敛位移，始终给右侧保留 --ppv-toolbar-gap 的间距，避免工具栏被裁切。 */
+.ppv-root.ppv-sidebar-open .ppv-toolbar {
+  position: relative;
+  left: min(
+    calc(var(--ppv-sidebar-footprint) / 2),
+    max(0px, calc((100% - var(--ppv-toolbar-max-width)) / 2 - var(--ppv-toolbar-gap)))
+  );
+  transition: left 0.18s ease;
 }
 .ppv-group {
   display: flex;
@@ -481,10 +497,10 @@
 /* ---------------- 缩略图侧栏 ---------------- */
 .ppv-sidebar {
   flex: 0 0 auto;
-  width: 180px;
+  width: var(--ppv-sidebar-width);
   display: none;
   flex-direction: column;
-  margin: 10px;
+  margin: var(--ppv-sidebar-margin);
   background: var(--ppv-surface);
   border: 1px solid var(--ppv-border);
   border-radius: 12px;
@@ -860,8 +876,8 @@
   .ppv-title {
     display: none;
   }
-  .ppv-sidebar {
-    width: 140px;
+  .ppv-root {
+    --ppv-sidebar-width: 140px;
   }
   .ppv-find-input-wrap {
     min-width: 0;
